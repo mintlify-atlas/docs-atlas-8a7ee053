@@ -1,0 +1,84 @@
+{
+  "projectType": "api-service",
+  "projectName": "Pet Adoption API",
+  "projectDescription": "RESTful API service for managing pet adoptions, users, and authentication with MongoDB backend",
+  "theme": "palm",
+  "primaryColor": "#FF6B6B",
+  "lightColor": "#FFE66D",
+  "darkColor": "#4ECDC4",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": ["introduction", "quickstart", "authentication"]
+          },
+          {
+            "group": "Core Concepts",
+            "pages": ["concepts/architecture", "concepts/data-models", "concepts/error-handling"]
+          },
+          {
+            "group": "Guides",
+            "pages": ["guides/setup", "guides/docker-deployment", "guides/testing"]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Authentication",
+            "pages": ["api/sessions/register", "api/sessions/login", "api/sessions/current"]
+          },
+          {
+            "group": "Users",
+            "pages": ["api/users/get-all", "api/users/get-by-id", "api/users/update", "api/users/delete"]
+          },
+          {
+            "group": "Pets",
+            "pages": ["api/pets/get-all", "api/pets/create", "api/pets/create-with-image", "api/pets/update", "api/pets/delete"]
+          },
+          {
+            "group": "Adoptions",
+            "pages": ["api/adoptions/get-all", "api/adoptions/get-by-id", "api/adoptions/create"]
+          },
+          {
+            "group": "Mock Data",
+            "pages": ["api/mocks/overview", "api/mocks/generate-users", "api/mocks/generate-data"]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "RESTful API for pet adoption management",
+    "JWT-based authentication and authorization",
+    "User, pet, and adoption CRUD operations",
+    "Image upload support for pet profiles",
+    "Mock data generation with Faker.js",
+    "OpenAPI/Swagger documentation",
+    "Repository pattern with MongoDB",
+    "Docker containerization support"
+  ],
+  "publicApiSurface": [
+    "POST /api/sessions/register",
+    "POST /api/sessions/login",
+    "GET /api/sessions/current",
+    "GET /api/users",
+    "GET /api/users/:uid",
+    "PUT /api/users/:uid",
+    "DELETE /api/users/:uid",
+    "GET /api/pets",
+    "POST /api/pets",
+    "POST /api/pets/withimage",
+    "PUT /api/pets/:pid",
+    "DELETE /api/pets/:pid",
+    "GET /api/adoptions",
+    "GET /api/adoptions/:aid",
+    "POST /api/adoptions/:uid/:pid",
+    "GET /api/mocks/mockingusers",
+    "POST /api/mocks/generateData"
+  ]
+}

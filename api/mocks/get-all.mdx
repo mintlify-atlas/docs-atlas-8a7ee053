@@ -1,0 +1,62 @@
+---
+title: Get all mocks
+api: GET /api/mocks
+description: Retrieve all mock records from the database
+---
+
+Fetches all mock records stored in the database. Mocks are generic placeholder records that can be created via the `POST /api/mocks` endpoint.
+
+## Response
+
+<ResponseField name="mocks" type="array">
+  Array of mock objects
+  
+  <Expandable title="mock object">
+    <ResponseField name="_id" type="string">
+      MongoDB ObjectId of the mock
+    </ResponseField>
+    
+    <ResponseField name="name" type="string">
+      Name of the mock
+    </ResponseField>
+    
+    <ResponseField name="description" type="string">
+      Description of the mock
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Example Request
+
+```bash cURL
+curl -X GET http://localhost:8080/api/mocks
+```
+
+## Response Examples
+
+<CodeGroup>
+```json 200 Success
+[
+  {
+    "_id": "507f1f77bcf86cd799439011",
+    "name": "Test Mock",
+    "description": "A test mock record"
+  },
+  {
+    "_id": "507f1f77bcf86cd799439012",
+    "name": "Another Mock",
+    "description": "Another test record"
+  }
+]
+```
+
+```json 500 Server Error
+{
+  "error": "Error fetching mocks"
+}
+```
+</CodeGroup>
+
+<Note>
+  This endpoint returns mock records created via `POST /api/mocks`, not the generated user/pet data from `/mockingusers` or `/generateData`.
+</Note>

@@ -1,0 +1,97 @@
+---
+title: Unprotected login
+api: GET /api/sessions/unprotectedLogin
+description: Alternative login endpoint that returns full user object in JWT token instead of DTO
+---
+
+<Warning>
+  This endpoint stores the complete user object (including password hash) in the JWT token. Use the standard `/login` endpoint for production applications.
+</Warning>
+
+<Note>
+  This endpoint is defined as GET but expects a request body. This may not work with all HTTP clients. Consider using POST `/api/sessions/login` instead.
+</Note>
+
+## Request
+
+<ParamField body="email" type="string" required>
+  User's email address
+</ParamField>
+
+<ParamField body="password" type="string" required>
+  User's password (will be validated against hashed password)
+</ParamField>
+
+## Response
+
+<ResponseField name="status" type="string">
+  Success status ("success")
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Confirmation message ("Unprotected Logged in")
+</ResponseField>
+
+Sets a cookie named `unprotectedCookie` containing a JWT token with the full user object.
+
+### Cookie Details
+
+- **Name**: `unprotectedCookie`
+- **Expiration**: 1 hour (3600000 ms)
+- **Contains**: Full user object from database (including password hash)
+
+## Example Request
+
+```bash cURL
+curl -X GET http://localhost:8080/api/sessions/unprotectedLogin \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "jane@example.com",
+    "password": "securepass123"
+  }' \
+  -c cookies.txt
+```
+
+## Responses
+
+<CodeGroup>
+```json 200 Success
+{
+  "status": "success",
+  "message": "Unprotected Logged in"
+}
+```
+
+```json 400 Missing Fields
+{
+  "status": "error",
+  "error": "Incomplete values"
+}
+```
+
+```json 404 User Not Found
+{
+  "status": "error",
+  "error": "User doesn't exist"
+}
+```
+
+```json 400 Invalid Password
+{
+  "status": "error",
+  "error": "Incorrect password"
+}
+```
+</CodeGroup>
+
+## Differences from Standard Login
+
+| Feature | `/login` | `/unprotectedLogin` |
+|---------|----------|---------------------|
+| Cookie name | `coderCookie` | `unprotectedCookie` |
+| JWT payload | User DTO (name, role, email) | Full user object |
+| Security | Recommended | Not recommended |
+
+<Note>
+  The standard `/login` endpoint uses a DTO to minimize sensitive data in the token. This unprotected variant may be useful for development/testing but should not be used in production.
+</Note>

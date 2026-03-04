@@ -135,9 +135,6 @@ The API uses environment variables for configuration. You need to create a `.env
     
     # Database Configuration
     MONGO_URL=mongodb://localhost:27017/petadoption
-    
-    # JWT Secret (use a strong random string in production)
-    JWT_SECRET=your_jwt_secret_key_here
     ```
     
     <Warning>
@@ -150,7 +147,6 @@ The API uses environment variables for configuration. You need to create a `.env
     
     - **PORT**: The port number where the API will run (default: 8080)
     - **MONGO_URL**: Your MongoDB connection string
-    - **JWT_SECRET**: A secure random string for JWT token generation
     
     <Tip>
       For MongoDB Atlas, replace `MONGO_URL` with your cluster connection string from the Atlas dashboard.

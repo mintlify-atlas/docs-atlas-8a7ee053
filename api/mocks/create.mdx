@@ -1,0 +1,70 @@
+---
+title: Create mock
+api: POST /api/mocks
+description: Create a new mock record in the database
+---
+
+Creates a new mock record with a name and description. This endpoint is useful for testing purposes.
+
+## Request
+
+<ParamField body="name" type="string" required>
+  Name for the mock record
+</ParamField>
+
+<ParamField body="description" type="string" required>
+  Description for the mock record
+</ParamField>
+
+## Response
+
+<ResponseField name="_id" type="string">
+  MongoDB ObjectId of the created mock
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  Name of the mock
+</ResponseField>
+
+<ResponseField name="description" type="string">
+  Description of the mock
+</ResponseField>
+
+## Example Request
+
+```bash cURL
+curl -X POST http://localhost:8080/api/mocks \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Test Mock",
+    "description": "A mock record for testing"
+  }'
+```
+
+## Responses
+
+<CodeGroup>
+```json 201 Created
+{
+  "_id": "507f1f77bcf86cd799439011",
+  "name": "Test Mock",
+  "description": "A mock record for testing"
+}
+```
+
+```json 400 Missing Fields
+{
+  "error": "Name and description are required"
+}
+```
+
+```json 500 Server Error
+{
+  "error": "Error creating mock"
+}
+```
+</CodeGroup>
+
+<Info>
+  Mock records created with this endpoint can be retrieved using `GET /api/mocks`.
+</Info>

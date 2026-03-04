@@ -42,7 +42,7 @@
         "groups": [
           {
             "group": "Authentication",
-            "pages": ["api/sessions/register", "api/sessions/login", "api/sessions/current"]
+            "pages": ["api/sessions/register", "api/sessions/login", "api/sessions/current", "api/sessions/unprotected-login", "api/sessions/unprotected-current"]
           },
           {
             "group": "Users",
@@ -58,7 +58,7 @@
           },
           {
             "group": "Mock Data",
-            "pages": ["api/mocks/overview", "api/mocks/generate-users", "api/mocks/generate-data"]
+            "pages": ["api/mocks/overview", "api/mocks/get-all", "api/mocks/create", "api/mocks/generate-users", "api/mocks/generate-data"]
           }
         ]
       }

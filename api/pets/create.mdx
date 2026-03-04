@@ -1,0 +1,92 @@
+---
+title: 'Create Pet'
+api: 'POST /api/pets'
+---
+
+Create a new pet in the adoption system.
+
+## Request Body
+
+<ParamField body="name" type="string" required>
+  Name of the pet
+</ParamField>
+
+<ParamField body="specie" type="string" required>
+  Species of the pet (e.g., dog, cat, bird)
+</ParamField>
+
+<ParamField body="birthDate" type="string" required>
+  Birth date of the pet in ISO 8601 format (e.g., "2020-05-15")
+</ParamField>
+
+## Response
+
+<ResponseField name="status" type="string">
+  Response status indicator ("success" or "error")
+</ResponseField>
+
+<ResponseField name="payload" type="object">
+  The created pet object
+  
+  <ResponseField name="_id" type="string">
+    Unique identifier for the newly created pet
+  </ResponseField>
+  
+  <ResponseField name="name" type="string">
+    Name of the pet
+  </ResponseField>
+  
+  <ResponseField name="specie" type="string">
+    Species of the pet
+  </ResponseField>
+  
+  <ResponseField name="birthDate" type="string">
+    Birth date of the pet in ISO 8601 format
+  </ResponseField>
+  
+  <ResponseField name="adopted" type="boolean">
+    Whether the pet has been adopted (default: false)
+  </ResponseField>
+</ResponseField>
+
+<ResponseField name="error" type="string">
+  Error message if status is "error" (e.g., "Incomplete values")
+</ResponseField>
+
+## Example Request
+
+```bash cURL
+curl -X POST https://api.example.com/api/pets \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Buddy",
+    "specie": "dog",
+    "birthDate": "2020-05-15"
+  }'
+```
+
+## Example Response
+
+### Success Response
+
+```json
+{
+  "status": "success",
+  "payload": {
+    "_id": "507f1f77bcf86cd799439011",
+    "name": "Buddy",
+    "specie": "dog",
+    "birthDate": "2020-05-15T00:00:00.000Z",
+    "adopted": false
+  }
+}
+```
+
+### Error Response
+
+```json
+{
+  "status": "error",
+  "error": "Incomplete values"
+}
+```

@@ -1,0 +1,367 @@
+---
+title: 'Error Handling'
+description: 'Error response formats, status codes, and patterns used in the Pet Adoption API'
+---
+
+## Overview
+
+The Pet Adoption API uses a consistent error handling approach across all endpoints. Errors are returned in a standardized JSON format with appropriate HTTP status codes.
+
+## Error Response Format
+
+All error responses follow this consistent structure:
+
+<CodeGroup>
+```json Error Response
+{
+  "status": "error",
+  "error": "Human-readable error message"
+}
+```
+
+```json Success Response (for comparison)
+{
+  "status": "success",
+  "payload": { /* response data */ }
+}
+```
+</CodeGroup>
+
+<ResponseField name="status" type="string">
+  Always set to `"error"` for error responses, or `"success"` for successful requests
+</ResponseField>
+
+<ResponseField name="error" type="string">
+  Human-readable error message describing what went wrong
+</ResponseField>
+
+<Note>
+  The API uses a simple, predictable format that makes it easy for clients to detect and handle errors.
+</Note>
+
+## HTTP Status Codes
+
+The API uses standard HTTP status codes to indicate the type of error:
+
+<AccordionGroup>
+  <Accordion title="400 Bad Request" icon="circle-exclamation">
+    Indicates that the request was malformed or missing required data.
+    
+    **Common Causes:**
+    - Missing required fields in request body
+    - Invalid data format
+    - Business rule violation (e.g., adopting an already-adopted pet)
+    
+    **Example:**
+    ```json
+    {
+      "status": "error",
+      "error": "Incomplete values"
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="404 Not Found" icon="circle-question">
+    Indicates that the requested resource does not exist in the database.
+    
+    **Common Causes:**
+    - Invalid user ID
+    - Invalid pet ID
+    - Invalid adoption ID
+    - Resource was deleted
+    
+    **Example:**
+    ```json
+    {
+      "status": "error",
+      "error": "User not found"
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="200 OK" icon="circle-check">
+    Indicates successful request processing.
+    
+    **Response Format:**
+    ```json
+    {
+      "status": "success",
+      "payload": { /* response data */ }
+    }
+    ```
+    
+    Or for operations without return data:
+    ```json
+    {
+      "status": "success",
+      "message": "Operation completed"
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Error Patterns by Operation
+
+Here are the common error handling patterns used throughout the API:
+
+### Validation Errors (400)
+
+Validation errors occur when required fields are missing or invalid.
+
+<CodeGroup>
+```javascript Create Pet - Missing Fields
+const createPet = async(req, res) => {
+    const {name, specie, birthDate} = req.body;
+    if(!name || !specie || !birthDate) 
+        return res.status(400).send({
+            status: "error", 
+            error: "Incomplete values"
+        })
+    // ... continue with creation
+}
+```
+
+```javascript Create Adoption - Pet Already Adopted
+const createAdoption = async (req, res) => {
+  const { uid, pid } = req.params;
+  const pet = await petsService.getBy({ _id: pid });
+  
+  if (pet.adopted)
+    return res.status(400).send({
+      status: "error", 
+      error: "Pet is already adopted"
+    });
+  // ... continue with adoption
+};
+```
+</CodeGroup>
+
+<Warning>
+  Validation errors are checked early in controller methods to fail fast and provide immediate feedback.
+</Warning>
+
+### Resource Not Found Errors (404)
+
+These errors occur when attempting to access or modify a non-existent resource.
+
+<CodeGroup>
+```javascript Get User by ID
+const getUser = async(req, res) => {
+    const userId = req.params.uid;
+    const user = await usersService.getUserById(userId);
+    
+    if(!user) 
+        return res.status(404).send({
+            status: "error", 
+            error: "User not found"
+        })
+    
+    res.send({status: "success", payload: user})
+}
+```
+
+```javascript Update User
+const updateUser = async(req, res) => {
+    const updateBody = req.body;
+    const userId = req.params.uid;
+    const user = await usersService.getUserById(userId);
+    
+    if(!user) 
+        return res.status(404).send({
+            status: "error", 
+            error: "User not found"
+        })
+    
+    const result = await usersService.update(userId, updateBody);
+    res.send({status: "success", message: "User updated"})
+}
+```
+</CodeGroup>
+
+### Multiple Validation Checks
+
+Complex operations may require multiple validation steps:
+
+<CodeGroup>
+```javascript Create Adoption - Full Validation
+const createAdoption = async (req, res) => {
+  const { uid, pid } = req.params;
+  
+  // Check 1: User exists
+  const user = await usersService.getUserById(uid);
+  if (!user)
+    return res.status(404).send({
+      status: "error", 
+      error: "user Not found"
+    });
+  
+  // Check 2: Pet exists
+  const pet = await petsService.getBy({ _id: pid });
+  if (!pet)
+    return res.status(404).send({
+      status: "error", 
+      error: "Pet not found"
+    });
+  
+  // Check 3: Pet not already adopted
+  if (pet.adopted)
+    return res.status(400).send({
+      status: "error", 
+      error: "Pet is already adopted"
+    });
+  
+  // All validations passed - proceed with adoption
+  user.pets.push(pet._id);
+  await usersService.update(user._id, { pets: user.pets });
+  await petsService.update(pet._id, { adopted: true, owner: user._id });
+  await adoptionsService.create({ owner: user._id, pet: pet._id });
+  
+  res.send({ status: "success", message: "Pet adopted" });
+};
+```
+</CodeGroup>
+
+<Tip>
+  Validation checks are performed in order of dependency - verify resources exist before checking their properties.
+</Tip>
+
+## Success Response Patterns
+
+While not errors, it's important to understand success responses for proper error detection:
+
+### Response with Data
+
+Used when returning resources:
+
+```javascript
+const getAllPets = async(req, res) => {
+    const pets = await petsService.getAll();
+    res.send({
+        status: "success", 
+        payload: pets
+    })
+}
+```
+
+### Response with Message
+
+Used for operations that don't return data:
+
+```javascript
+const deletePet = async(req, res) => {
+    const petId = req.params.pid;
+    const result = await petsService.delete(petId);
+    res.send({
+        status: "success", 
+        message: "pet deleted"
+    });
+}
+```
+
+## Error Detection in Client Code
+
+Clients can easily detect errors by checking the `status` field:
+
+<CodeGroup>
+```javascript JavaScript Client
+const response = await fetch('/api/pets/123');
+const data = await response.json();
+
+if (data.status === "error") {
+  console.error(`Error: ${data.error}`);
+  // Handle error
+} else {
+  console.log(`Success: ${data.payload}`);
+  // Process data
+}
+```
+
+```python Python Client
+import requests
+
+response = requests.get('http://api.example.com/api/pets/123')
+data = response.json()
+
+if data['status'] == 'error':
+    print(f"Error: {data['error']}")
+    # Handle error
+else:
+    print(f"Success: {data['payload']}")
+    # Process data
+```
+</CodeGroup>
+
+## Common Error Messages
+
+Here's a reference of error messages you may encounter:
+
+| Error Message | Status Code | Cause |
+|--------------|-------------|-------|
+| `"Incomplete values"` | 400 | Missing required fields in request body |
+| `"User not found"` | 404 | Invalid user ID or user doesn't exist |
+| `"Pet not found"` | 404 | Invalid pet ID or pet doesn't exist |
+| `"Adoption not found"` | 404 | Invalid adoption ID or adoption doesn't exist |
+| `"Pet is already adopted"` | 400 | Attempting to adopt a pet that's already adopted |
+| `"user Not found"` | 404 | User doesn't exist (variant spelling in adoption endpoint) |
+
+<Note>
+  Some error messages have inconsistent capitalization (e.g., "user Not found"). This is present in the source code and reflected accurately here.
+</Note>
+
+## Best Practices for Error Handling
+
+<CardGroup cols={2}>
+  <Card title="Check Status Field" icon="clipboard-check">
+    Always check the `status` field first to determine if the request succeeded
+  </Card>
+  <Card title="Handle HTTP Codes" icon="signal">
+    Use HTTP status codes for broad error categorization (400s vs 404s)
+  </Card>
+  <Card title="Display Error Messages" icon="message">
+    The `error` field contains user-friendly messages suitable for display
+  </Card>
+  <Card title="Log for Debugging" icon="bug">
+    Log the full response body for debugging and troubleshooting
+  </Card>
+</CardGroup>
+
+## Error Handling Workflow
+
+<Steps>
+  <Step title="Make API Request">
+    Send your request to the API endpoint
+  </Step>
+  <Step title="Check HTTP Status">
+    Examine the HTTP status code (200, 400, 404, etc.)
+  </Step>
+  <Step title="Parse JSON Response">
+    Parse the response body as JSON
+  </Step>
+  <Step title="Check Status Field">
+    Look at the `status` field (`"success"` or `"error"`)
+  </Step>
+  <Step title="Handle Accordingly">
+    If error: display the `error` message to the user
+    If success: process the `payload` or `message`
+  </Step>
+</Steps>
+
+## Limitations
+
+The current error handling implementation has some limitations to be aware of:
+
+<Warning>
+  **No Error Codes**: Errors don't include machine-readable error codes, requiring clients to parse error messages for specific handling.
+</Warning>
+
+<Warning>
+  **No Field-Level Errors**: Validation errors don't indicate which specific field is invalid.
+</Warning>
+
+<Warning>
+  **No Stack Traces**: Error responses don't include stack traces or detailed debugging information.
+</Warning>
+
+<Warning>
+  **Inconsistent Messages**: Some error messages have inconsistent capitalization or wording.
+</Warning>

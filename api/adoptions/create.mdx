@@ -1,0 +1,82 @@
+---
+title: "Create Adoption"
+api: "POST /api/adoptions/:uid/:pid"
+description: "Link a user and pet to create an adoption record"
+---
+
+This endpoint creates a new adoption record by linking a user with a pet. It updates the user's pet list, marks the pet as adopted, and creates an adoption record.
+
+## Request
+
+<ParamField path="uid" type="string" required>
+  The unique identifier of the user adopting the pet
+</ParamField>
+
+<ParamField path="pid" type="string" required>
+  The unique identifier of the pet being adopted
+</ParamField>
+
+```bash
+curl -X POST https://your-api-domain.com/api/adoptions/507f191e810c19729de860ea/507f191e810c19729de860eb
+```
+
+## Response
+
+<ResponseField name="status" type="string" required>
+  The status of the response (e.g., "success" or "error")
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Success message (present on success)
+</ResponseField>
+
+<ResponseField name="error" type="string">
+  Error message (present on failure)
+</ResponseField>
+
+### Success Response (200)
+
+```json
+{
+  "status": "success",
+  "message": "Pet adopted"
+}
+```
+
+### Error Responses
+
+#### User Not Found (404)
+
+```json
+{
+  "status": "error",
+  "error": "user Not found"
+}
+```
+
+#### Pet Not Found (404)
+
+```json
+{
+  "status": "error",
+  "error": "Pet not found"
+}
+```
+
+#### Pet Already Adopted (400)
+
+```json
+{
+  "status": "error",
+  "error": "Pet is already adopted"
+}
+```
+
+## What This Endpoint Does
+
+1. Validates that the user exists
+2. Validates that the pet exists
+3. Checks if the pet is already adopted
+4. Adds the pet ID to the user's pets array
+5. Updates the pet's `adopted` status to `true` and sets the `owner` field
+6. Creates a new adoption record linking the user and pet

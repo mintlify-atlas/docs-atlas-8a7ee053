@@ -1,0 +1,104 @@
+---
+title: "Get User by ID"
+api: "GET /api/users/:uid"
+description: "Retrieve a specific user by their ID"
+---
+
+This endpoint retrieves a single user from the database using their unique identifier.
+
+## Path Parameters
+
+<ParamField path="uid" type="string" required>
+  The unique identifier of the user to retrieve
+</ParamField>
+
+## Response
+
+<ResponseField name="status" type="string">
+  Status of the response (e.g., "success" or "error")
+</ResponseField>
+
+<ResponseField name="payload" type="object">
+  User object (returned on success)
+  
+  <ResponseField name="_id" type="string">
+    Auto-generated MongoDB ObjectId
+  </ResponseField>
+  
+  <ResponseField name="first_name" type="string">
+    User's first name
+  </ResponseField>
+  
+  <ResponseField name="last_name" type="string">
+    User's last name
+  </ResponseField>
+  
+  <ResponseField name="email" type="string">
+    User's email address (unique)
+  </ResponseField>
+  
+  <ResponseField name="password" type="string">
+    User's hashed password
+  </ResponseField>
+  
+  <ResponseField name="role" type="string" default="user">
+    User's role (e.g., "user" or "admin")
+  </ResponseField>
+  
+  <ResponseField name="pets" type="array">
+    Array of pet references associated with the user
+    
+    <ResponseField name="_id" type="string">
+      MongoDB ObjectId reference to a Pet
+    </ResponseField>
+  </ResponseField>
+</ResponseField>
+
+<ResponseField name="error" type="string">
+  Error message (returned on failure)
+</ResponseField>
+
+## Example Request
+
+```bash curl
+curl --request GET \
+  --url http://localhost:8000/api/users/507f1f77bcf86cd799439011
+```
+
+## Example Response
+
+### Success (200)
+
+```json
+{
+  "status": "success",
+  "payload": {
+    "_id": "507f1f77bcf86cd799439011",
+    "first_name": "Justina",
+    "last_name": "Mutigliengo",
+    "email": "j@gmail.com",
+    "password": "$eghio436jlmglkf9ej3hgdlmh",
+    "role": "user",
+    "pets": []
+  }
+}
+```
+
+### Error (404)
+
+```json
+{
+  "status": "error",
+  "error": "User not found"
+}
+```
+
+## Status Codes
+
+<ResponseField name="200" type="Success">
+  User was found and returned successfully
+</ResponseField>
+
+<ResponseField name="404" type="Error">
+  User not found with the provided ID
+</ResponseField>

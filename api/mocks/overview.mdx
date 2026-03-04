@@ -1,0 +1,58 @@
+---
+title: 'Mock Data Generation'
+description: 'Overview of mock data generation features and Faker.js integration'
+---
+
+## Overview
+
+The Pet Adoption API provides mock data generation capabilities to help you quickly populate your database with realistic test data. These endpoints utilize [Faker.js](https://fakerjs.dev/) to generate random but realistic user and pet information.
+
+## Use Cases
+
+Mock data generation is useful for:
+
+- **Development and Testing**: Quickly populate your database with test data during development
+- **Demo Environments**: Create realistic demo data for presentations and product showcases
+- **Performance Testing**: Generate large datasets to test application performance under load
+- **UI/UX Testing**: Populate interfaces with varied data to test different scenarios
+
+## Faker.js Integration
+
+The API leverages Faker.js to generate:
+
+- **User Data**: Names, emails, usernames, and roles
+- **Pet Data**: Pet names, ages, breeds, and species
+- **Realistic Variety**: Data includes natural variations and realistic combinations
+
+## Available Endpoints
+
+<CardGroup cols={2}>
+  <Card title="Generate Mock Users" icon="users" href="/api/mocks/generate-users">
+    Generate 50 mock users with hashed passwords
+  </Card>
+  <Card title="Generate Data" icon="database" href="/api/mocks/generate-data">
+    Generate custom quantities of users and pets
+  </Card>
+</CardGroup>
+
+## Data Characteristics
+
+### Generated Users
+
+- Random first and last names
+- Valid email addresses
+- Unique usernames
+- Default password: `coder123` (hashed with bcrypt)
+- Random role assignment (user or admin)
+- Empty pets array by default
+
+### Generated Pets
+
+- Random pet names
+- Ages between 1-15 years
+- Random breeds
+- Species: dog, cat, bird, or hamster
+
+## Security Note
+
+All generated users are created with the default password `coder123`, which is securely hashed using bcrypt with a salt factor of 10. Remember to change passwords in production environments.

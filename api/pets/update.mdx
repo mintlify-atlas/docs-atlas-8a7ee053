@@ -1,0 +1,71 @@
+---
+title: 'Update Pet'
+api: 'PUT /api/pets/:pid'
+---
+
+Update an existing pet's information in the adoption system.
+
+## Path Parameters
+
+<ParamField path="pid" type="string" required>
+  The unique identifier of the pet to update
+</ParamField>
+
+## Request Body
+
+Send only the fields you want to update:
+
+<ParamField body="name" type="string" optional>
+  Updated name of the pet
+</ParamField>
+
+<ParamField body="specie" type="string" optional>
+  Updated species of the pet
+</ParamField>
+
+<ParamField body="birthDate" type="string" optional>
+  Updated birth date of the pet in ISO 8601 format
+</ParamField>
+
+<ParamField body="adopted" type="boolean" optional>
+  Updated adoption status
+</ParamField>
+
+<ParamField body="owner" type="string" optional>
+  ID of the user who adopted the pet
+</ParamField>
+
+<ParamField body="image" type="string" optional>
+  Updated image path for the pet
+</ParamField>
+
+## Response
+
+<ResponseField name="status" type="string">
+  Response status indicator ("success")
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Confirmation message ("pet updated")
+</ResponseField>
+
+## Example Request
+
+```bash cURL
+curl -X PUT https://api.example.com/api/pets/507f1f77bcf86cd799439011 \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Buddy Jr",
+    "adopted": true,
+    "owner": "507f1f77bcf86cd799439099"
+  }'
+```
+
+## Example Response
+
+```json
+{
+  "status": "success",
+  "message": "pet updated"
+}
+```

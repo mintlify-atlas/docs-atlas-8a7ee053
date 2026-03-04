@@ -1,0 +1,93 @@
+---
+title: "Update User"
+api: "PUT /api/users/:uid"
+description: "Update a specific user by their ID"
+---
+
+This endpoint updates an existing user in the database with the provided information.
+
+## Path Parameters
+
+<ParamField path="uid" type="string" required>
+  The unique identifier of the user to update
+</ParamField>
+
+## Request Body
+
+<ParamField body="first_name" type="string">
+  User's first name
+</ParamField>
+
+<ParamField body="last_name" type="string">
+  User's last name
+</ParamField>
+
+<ParamField body="email" type="string">
+  User's email address (must be unique)
+</ParamField>
+
+<ParamField body="password" type="string">
+  User's password
+</ParamField>
+
+<ParamField body="role" type="string">
+  User's role (e.g., "user" or "admin")
+</ParamField>
+
+## Response
+
+<ResponseField name="status" type="string">
+  Status of the response (e.g., "success" or "error")
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Success message indicating the user was updated
+</ResponseField>
+
+<ResponseField name="error" type="string">
+  Error message (returned on failure)
+</ResponseField>
+
+## Example Request
+
+```bash curl
+curl --request PUT \
+  --url http://localhost:8000/api/users/507f1f77bcf86cd799439011 \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "first_name": "Justina",
+    "last_name": "Mutigliengo",
+    "email": "jususerapi@gmail.com",
+    "role": "admin"
+  }'
+```
+
+## Example Response
+
+### Success (200)
+
+```json
+{
+  "status": "success",
+  "message": "User updated"
+}
+```
+
+### Error (404)
+
+```json
+{
+  "status": "error",
+  "error": "User not found"
+}
+```
+
+## Status Codes
+
+<ResponseField name="200" type="Success">
+  User was updated successfully
+</ResponseField>
+
+<ResponseField name="404" type="Error">
+  User not found with the provided ID
+</ResponseField>

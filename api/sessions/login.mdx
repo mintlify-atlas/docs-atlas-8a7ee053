@@ -1,0 +1,78 @@
+---
+title: 'Login User'
+api: 'POST /api/sessions/login'
+description: 'Authenticate a user and receive a JWT cookie'
+---
+
+## Request Body
+
+<ParamField body="email" type="string" required>
+  User's registered email address
+</ParamField>
+
+<ParamField body="password" type="string" required>
+  User's password
+</ParamField>
+
+## Response
+
+<ResponseField name="status" type="string">
+  Status of the request - "success" or "error"
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Success message (returned on successful login)
+</ResponseField>
+
+<ResponseField name="error" type="string">
+  Error message (returned on failure)
+</ResponseField>
+
+## Cookies
+
+On successful login, a JWT cookie named `coderCookie` is set with the following properties:
+- **Max Age**: 3600000ms (1 hour)
+- **Token Expiration**: 1 hour
+- **Contains**: User data transfer object (DTO)
+
+## Example Request
+
+```bash cURL
+curl -X POST https://api.petadoption.com/api/sessions/login \
+  -H "Content-Type: application/json" \
+  -c cookies.txt \
+  -d '{
+    "email": "john.doe@example.com",
+    "password": "securePassword123"
+  }'
+```
+
+## Example Response
+
+```json Success (200)
+{
+  "status": "success",
+  "message": "Logged in"
+}
+```
+
+```json Error - Missing Fields (400)
+{
+  "status": "error",
+  "error": "Incomplete values"
+}
+```
+
+```json Error - User Not Found (404)
+{
+  "status": "error",
+  "error": "User doesn't exist"
+}
+```
+
+```json Error - Invalid Password (400)
+{
+  "status": "error",
+  "error": "Incorrect password"
+}
+```

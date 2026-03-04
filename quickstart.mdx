@@ -1,80 +1,302 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: 'Quickstart'
+description: 'Get started with the Pet Adoption API in minutes'
 ---
 
-## Get started in three steps
+<Note>
+  This guide will walk you through setting up the Pet Adoption API and making your first requests.
+</Note>
 
-Get your documentation site running locally and make your first customization.
+## Prerequisites
 
-### Step 1: Set up your local environment
+Before you begin, ensure you have the following installed:
+- Node.js (v14 or higher)
+- MongoDB (running locally or a connection URI)
+- npm or yarn package manager
 
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
+<Steps>
+  <Step title="Clone and Install">
+    First, clone the repository and install the dependencies:
 
-### Step 2: Deploy your changes
+    ```bash
+    git clone <repository-url>
+    cd pet-adoption-api
+    npm install
+    ```
 
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
+    The project uses the following key dependencies:
+    - **express** - Web framework
+    - **mongoose** - MongoDB object modeling
+    - **jsonwebtoken** - JWT authentication
+    - **bcryptjs** - Password hashing
+    - **cookie-parser** - Cookie handling
+  </Step>
 
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
+  <Step title="Configure Environment">
+    Create a `.env` file in the root directory with your configuration:
 
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
+    ```bash .env
+    MONGO_URL=mongodb://localhost:27017/pet-adoption
+    PORT=8080
+    ```
 
-### Step 3: Go live
+    <Warning>
+      Make sure your MongoDB instance is running before starting the server.
+    </Warning>
+  </Step>
 
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
+  <Step title="Start the Server">
+    Run the development server:
 
-## Next steps
+    <CodeGroup>
+      ```bash npm
+      npm run dev
+      ```
 
-Now that you have your docs running, explore these key features:
+      ```bash production
+      npm start
+      ```
+    </CodeGroup>
+
+    You should see:
+    ```
+    Listening on 8080
+    ```
+
+    The API will be available at `http://localhost:8080`
+  </Step>
+
+  <Step title="Make Your First API Call">
+    Now let's register a new user, login, and fetch the user list.
+
+    ### Register a New User
+
+    ```bash curl
+    curl -X POST http://localhost:8080/api/sessions/register \
+      -H "Content-Type: application/json" \
+      -d '{
+        "first_name": "John",
+        "last_name": "Doe",
+        "email": "john.doe@example.com",
+        "password": "securePassword123"
+      }'
+    ```
+
+    <CodeGroup>
+      ```javascript JavaScript
+      const response = await fetch('http://localhost:8080/api/sessions/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          first_name: 'John',
+          last_name: 'Doe',
+          email: 'john.doe@example.com',
+          password: 'securePassword123'
+        })
+      });
+
+      const data = await response.json();
+      console.log(data);
+      // { status: "success", payload: "user_id_here" }
+      ```
+
+      ```python Python
+      import requests
+
+      response = requests.post(
+          'http://localhost:8080/api/sessions/register',
+          json={
+              'first_name': 'John',
+              'last_name': 'Doe',
+              'email': 'john.doe@example.com',
+              'password': 'securePassword123'
+          }
+      )
+
+      print(response.json())
+      # {'status': 'success', 'payload': 'user_id_here'}
+      ```
+    </CodeGroup>
+
+    **Response:**
+    ```json
+    {
+      "status": "success",
+      "payload": "507f1f77bcf86cd799439011"
+    }
+    ```
+
+    ### Login
+
+    ```bash curl
+    curl -X POST http://localhost:8080/api/sessions/login \
+      -H "Content-Type: application/json" \
+      -c cookies.txt \
+      -d '{
+        "email": "john.doe@example.com",
+        "password": "securePassword123"
+      }'
+    ```
+
+    <CodeGroup>
+      ```javascript JavaScript
+      const response = await fetch('http://localhost:8080/api/sessions/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include', // Important for cookies
+        body: JSON.stringify({
+          email: 'john.doe@example.com',
+          password: 'securePassword123'
+        })
+      });
+
+      const data = await response.json();
+      console.log(data);
+      // { status: "success", message: "Logged in" }
+      ```
+
+      ```python Python
+      import requests
+
+      session = requests.Session()
+      response = session.post(
+          'http://localhost:8080/api/sessions/login',
+          json={
+              'email': 'john.doe@example.com',
+              'password': 'securePassword123'
+          }
+      )
+
+      print(response.json())
+      # {'status': 'success', 'message': 'Logged in'}
+      ```
+    </CodeGroup>
+
+    **Response:**
+    ```json
+    {
+      "status": "success",
+      "message": "Logged in"
+    }
+    ```
+
+    <Note>
+      The login endpoint sets a `coderCookie` cookie with your JWT token that expires in 1 hour.
+    </Note>
+
+    ### Get All Users
+
+    ```bash curl
+    curl -X GET http://localhost:8080/api/users \
+      -b cookies.txt
+    ```
+
+    <CodeGroup>
+      ```javascript JavaScript
+      const response = await fetch('http://localhost:8080/api/users', {
+        method: 'GET',
+        credentials: 'include' // Include cookies
+      });
+
+      const data = await response.json();
+      console.log(data);
+      ```
+
+      ```python Python
+      # Using the same session from login
+      response = session.get('http://localhost:8080/api/users')
+      print(response.json())
+      ```
+    </CodeGroup>
+
+    **Response:**
+    ```json
+    {
+      "status": "success",
+      "payload": [
+        {
+          "_id": "507f1f77bcf86cd799439011",
+          "first_name": "John",
+          "last_name": "Doe",
+          "email": "john.doe@example.com",
+          "role": "user",
+          "pets": []
+        }
+      ]
+    }
+    ```
+  </Step>
+</Steps>
+
+## API Base URL
+
+By default, the API runs on:
+
+```
+http://localhost:8080
+```
+
+All endpoints are prefixed with `/api`, so the full base URL for API calls is:
+
+```
+http://localhost:8080/api
+```
+
+## Available Endpoints
+
+The Pet Adoption API provides the following resource groups:
 
 <CardGroup cols={2}>
+  <Card title="Sessions" icon="key" color="#FF6B6B">
+    Authentication endpoints for user registration and login
+    - `/api/sessions/register`
+    - `/api/sessions/login`
+    - `/api/sessions/current`
+  </Card>
 
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
+  <Card title="Users" icon="users" color="#FF6B6B">
+    User management endpoints
+    - `/api/users`
+    - `/api/users/:uid`
+  </Card>
 
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
+  <Card title="Pets" icon="paw" color="#FF6B6B">
+    Pet management endpoints
+    - `/api/pets`
+    - `/api/pets/:pid`
+  </Card>
 
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
+  <Card title="Adoptions" icon="heart" color="#FF6B6B">
+    Pet adoption management
+    - `/api/adoptions`
+    - `/api/adoptions/:aid`
+  </Card>
+</CardGroup>
 
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
+## API Documentation
 
+Once the server is running, you can access the Swagger API documentation at:
+
+```
+http://localhost:8080/apidocs
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Authentication" icon="shield-halved" href="/authentication">
+    Learn about JWT tokens, sessions, and securing your API calls
+  </Card>
+
+  <Card title="API Reference" icon="book" href="/api/sessions/register">
+    Explore all available endpoints and their parameters
+  </Card>
 </CardGroup>
 
 <Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
+  Need help? Check out the [API documentation](http://localhost:8080/apidocs) or review the source code in the repository.
 </Note>

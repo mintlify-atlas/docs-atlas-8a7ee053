@@ -1,0 +1,47 @@
+---
+title: "Delete User"
+api: "DELETE /api/users/:uid"
+description: "Delete a specific user by their ID"
+---
+
+This endpoint deletes a user from the database using their unique identifier.
+
+## Path Parameters
+
+<ParamField path="uid" type="string" required>
+  The unique identifier of the user to delete
+</ParamField>
+
+## Response
+
+<ResponseField name="status" type="string">
+  Status of the response (e.g., "success")
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Success message indicating the user was deleted
+</ResponseField>
+
+## Example Request
+
+```bash curl
+curl --request DELETE \
+  --url http://localhost:8000/api/users/507f1f77bcf86cd799439011
+```
+
+## Example Response
+
+### Success (200)
+
+```json
+{
+  "status": "success",
+  "message": "User deleted"
+}
+```
+
+## Status Codes
+
+<ResponseField name="200" type="Success">
+  User was deleted successfully
+</ResponseField>

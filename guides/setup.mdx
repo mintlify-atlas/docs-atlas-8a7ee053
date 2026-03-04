@@ -1,0 +1,268 @@
+---
+title: 'Setup Guide'
+description: 'Complete guide to setting up the Pet Adoption API locally'
+icon: 'gear'
+---
+
+## Prerequisites
+
+Before you begin, ensure you have the following installed on your system:
+
+<CardGroup cols={2}>
+  <Card title="Node.js" icon="node-js">
+    Version 14.x or higher required
+  </Card>
+  <Card title="MongoDB" icon="database">
+    Version 4.x or higher for data storage
+  </Card>
+</CardGroup>
+
+## Install Node.js
+
+If you don't have Node.js installed, download it from the official website:
+
+<Steps>
+  <Step title="Download Node.js">
+    Visit [nodejs.org](https://nodejs.org) and download the LTS version for your operating system.
+  </Step>
+  
+  <Step title="Verify Installation">
+    Open your terminal and verify the installation:
+    
+    ```bash
+    node --version
+    npm --version
+    ```
+    
+    You should see version numbers printed for both commands.
+  </Step>
+</Steps>
+
+## Setup MongoDB
+
+You have two options for running MongoDB:
+
+<Tabs>
+  <Tab title="MongoDB Atlas (Cloud)">
+    ### Using MongoDB Atlas
+    
+    1. Create a free account at [mongodb.com/cloud/atlas](https://www.mongodb.com/cloud/atlas)
+    2. Create a new cluster
+    3. Add a database user with username and password
+    4. Whitelist your IP address (or use 0.0.0.0/0 for development)
+    5. Get your connection string from the "Connect" button
+    
+    Your connection string will look like:
+    ```
+    mongodb+srv://username:password@cluster.mongodb.net/petadoption?retryWrites=true&w=majority
+    ```
+  </Tab>
+  
+  <Tab title="Local MongoDB">
+    ### Running MongoDB Locally
+    
+    **On macOS:**
+    ```bash
+    brew tap mongodb/brew
+    brew install mongodb-community
+    brew services start mongodb-community
+    ```
+    
+    **On Ubuntu/Debian:**
+    ```bash
+    sudo apt-get install mongodb
+    sudo systemctl start mongodb
+    sudo systemctl enable mongodb
+    ```
+    
+    **On Windows:**
+    Download the installer from [mongodb.com/try/download/community](https://www.mongodb.com/try/download/community)
+    
+    Your local connection string will be:
+    ```
+    mongodb://localhost:27017/petadoption
+    ```
+  </Tab>
+</Tabs>
+
+## Clone and Install
+
+<Steps>
+  <Step title="Clone the Repository">
+    Clone the Pet Adoption API repository to your local machine:
+    
+    ```bash
+    git clone https://github.com/justinamutigliengo/proyecto_back.git
+    cd proyecto_back
+    ```
+  </Step>
+  
+  <Step title="Install Dependencies">
+    Install all required npm packages:
+    
+    ```bash
+    npm install
+    ```
+    
+    This will install all dependencies listed in `package.json`, including:
+    - Express.js for the web server
+    - Mongoose for MongoDB interactions
+    - bcryptjs for password hashing
+    - jsonwebtoken for authentication
+    - And more...
+  </Step>
+</Steps>
+
+## Environment Configuration
+
+The API uses environment variables for configuration. You need to create a `.env` file in the root directory.
+
+<Steps>
+  <Step title="Create .env File">
+    Create a new file named `.env` in the root directory of the project:
+    
+    ```bash
+    touch .env
+    ```
+  </Step>
+  
+  <Step title="Add Environment Variables">
+    Add the following environment variables to your `.env` file:
+    
+    ```bash .env
+    # Server Configuration
+    PORT=8080
+    
+    # Database Configuration
+    MONGO_URL=mongodb://localhost:27017/petadoption
+    
+    # JWT Secret (use a strong random string in production)
+    JWT_SECRET=your_jwt_secret_key_here
+    ```
+    
+    <Warning>
+      Never commit your `.env` file to version control! It's already included in `.gitignore`.
+    </Warning>
+  </Step>
+  
+  <Step title="Customize Values">
+    Update the values according to your setup:
+    
+    - **PORT**: The port number where the API will run (default: 8080)
+    - **MONGO_URL**: Your MongoDB connection string
+    - **JWT_SECRET**: A secure random string for JWT token generation
+    
+    <Tip>
+      For MongoDB Atlas, replace `MONGO_URL` with your cluster connection string from the Atlas dashboard.
+    </Tip>
+  </Step>
+</Steps>
+
+## Running the Application
+
+You can run the application in two modes:
+
+<Tabs>
+  <Tab title="Development Mode">
+    ### Development Mode with Auto-Reload
+    
+    For development, use nodemon which automatically restarts the server when files change:
+    
+    ```bash
+    npm run dev
+    ```
+    
+    The server will start and watch for file changes. Any modifications to `.js` files will trigger an automatic restart.
+  </Tab>
+  
+  <Tab title="Production Mode">
+    ### Production Mode
+    
+    For production deployment, use the standard start command:
+    
+    ```bash
+    npm start
+    ```
+    
+    This runs the server without auto-reload for better performance.
+  </Tab>
+</Tabs>
+
+<Check>
+  If everything is configured correctly, you should see:
+  ```
+  Listening on 8080
+  ```
+</Check>
+
+## Verify Installation
+
+Test that your API is running correctly:
+
+<Steps>
+  <Step title="Access API Documentation">
+    Open your browser and navigate to:
+    
+    ```
+    http://localhost:8080/apidocs
+    ```
+    
+    You should see the Swagger UI documentation for the API.
+  </Step>
+  
+  <Step title="Test an Endpoint">
+    Try accessing a simple endpoint using curl or your browser:
+    
+    ```bash
+    curl http://localhost:8080/api/pets
+    ```
+    
+    You should receive a JSON response (may be an empty array if no pets exist yet).
+  </Step>
+</Steps>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Docker Deployment" icon="docker" href="/guides/docker-deployment">
+    Learn how to deploy using Docker containers
+  </Card>
+  <Card title="Testing" icon="flask" href="/guides/testing">
+    Run the test suite to verify functionality
+  </Card>
+  <Card title="Authentication" icon="shield" href="/authentication">
+    Learn how to authenticate API requests
+  </Card>
+  <Card title="API Reference" icon="book" href="/api/sessions/register">
+    Explore all available endpoints
+  </Card>
+</CardGroup>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Connection refused to MongoDB">
+    - Ensure MongoDB is running: `sudo systemctl status mongodb` (Linux) or check Activity Monitor (macOS)
+    - Verify your `MONGO_URL` in the `.env` file is correct
+    - Check if MongoDB is listening on the expected port (default: 27017)
+  </Accordion>
+  
+  <Accordion title="Port already in use">
+    If port 8080 is already in use:
+    - Change the `PORT` value in your `.env` file to an available port
+    - Or stop the process using port 8080:
+      ```bash
+      # Find the process
+      lsof -i :8080
+      # Kill the process (replace PID with actual process ID)
+      kill -9 PID
+      ```
+  </Accordion>
+  
+  <Accordion title="Module not found errors">
+    If you see "Cannot find module" errors:
+    - Delete `node_modules` and `package-lock.json`
+    - Run `npm install` again
+    - Ensure you're using Node.js version 14.x or higher
+  </Accordion>
+</AccordionGroup>

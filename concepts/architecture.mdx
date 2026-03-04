@@ -1,0 +1,295 @@
+---
+title: 'Architecture'
+description: 'Understanding the layered architecture of the Pet Adoption API'
+---
+
+## Overview
+
+The Pet Adoption API follows a clean, layered architecture pattern that separates concerns and promotes maintainability. The flow of data moves through six distinct layers:
+
+<Steps>
+  <Step title="Routes">
+    Define API endpoints and HTTP methods
+  </Step>
+  <Step title="Controllers">
+    Handle HTTP requests and responses
+  </Step>
+  <Step title="Services">
+    Contain business logic and orchestrate operations
+  </Step>
+  <Step title="Repositories">
+    Provide abstraction over data access
+  </Step>
+  <Step title="DAOs">
+    Perform database operations
+  </Step>
+  <Step title="Models">
+    Define MongoDB schemas and data structure
+  </Step>
+</Steps>
+
+## Architecture Layers
+
+### Routes Layer
+
+Routes define the API endpoints and map them to controller methods. They handle HTTP method routing and middleware integration.
+
+<CodeGroup>
+```javascript pets.router.js
+import { Router } from 'express';
+import petsController from '../controllers/pets.controller.js';
+import uploader from '../utils/uploader.js';
+
+const router = Router();
+
+router.get('/', petsController.getAllPets);
+router.post('/', petsController.createPet);
+router.post('/withimage', uploader.single('image'), petsController.createPetWithImage);
+router.put('/:pid', petsController.updatePet);
+router.delete('/:pid', petsController.deletePet);
+
+export default router;
+```
+</CodeGroup>
+
+### Controllers Layer
+
+Controllers handle incoming requests, validate input, call services, and format responses. They serve as the entry point for business logic.
+
+<CodeGroup>
+```javascript pets.controller.js
+const getAllPets = async(req, res) => {
+    const pets = await petsService.getAll();
+    res.send({status: "success", payload: pets})
+}
+
+const createPet = async(req, res) => {
+    const {name, specie, birthDate} = req.body;
+    if(!name || !specie || !birthDate) 
+        return res.status(400).send({status: "error", error: "Incomplete values"})
+    
+    const pet = PetDTO.getPetInputFrom({name, specie, birthDate});
+    const result = await petsService.create(pet);
+    res.send({status: "success", payload: result})
+}
+```
+</CodeGroup>
+
+<Note>
+  Controllers focus on HTTP concerns (request/response) while delegating business logic to services.
+</Note>
+
+### Services Layer
+
+Services act as the business logic layer and are initialized with repositories. They orchestrate complex operations across multiple repositories.
+
+<CodeGroup>
+```javascript services/index.js
+import Users from "../dao/Users.dao.js";
+import Pet from "../dao/Pets.dao.js";
+import Adoption from "../dao/Adoption.js";
+
+import UserRepository from "../repository/UserRepository.js";
+import PetRepository from "../repository/PetRepository.js";
+import AdoptionRepository from "../repository/AdoptionRepository.js";
+
+export const usersService = new UserRepository(new Users());
+export const petsService = new PetRepository(new Pet());
+export const adoptionsService = new AdoptionRepository(new Adoption());
+```
+</CodeGroup>
+
+### Repository Pattern
+
+The repository pattern provides a clean abstraction over data access. All repositories extend `GenericRepository`, which delegates operations to DAOs.
+
+<CodeGroup>
+```javascript GenericRepository.js
+export default class GenericRepository {
+    constructor(dao) {
+        this.dao = dao;
+    }
+
+    getAll = (params) => {
+        return this.dao.get(params);
+    }
+
+    getBy = (params) => {
+        return this.dao.getBy(params);
+    }
+
+    create = (doc) => {
+        return this.dao.save(doc);
+    }
+
+    update = (id, doc) => {
+        return this.dao.update(id, doc);
+    }
+
+    delete = (id) => {
+        return this.dao.delete(id);
+    }
+}
+```
+
+```javascript PetRepository.js
+import GenericRepository from "./GenericRepository.js";
+
+export default class PetRepository extends GenericRepository {
+  constructor(dao) {
+    super(dao);
+  }
+}
+```
+</CodeGroup>
+
+<Tip>
+  The repository pattern allows you to swap data sources without changing business logic.
+</Tip>
+
+### DAOs (Data Access Objects)
+
+DAOs contain methods that directly interact with MongoDB models. They perform CRUD operations using Mongoose.
+
+<CodeGroup>
+```javascript Pets.dao.js
+import petModel from "./models/Pet.js";
+
+export default class Pet {
+    get = (params) => {
+        return petModel.find(params)
+    }
+
+    getBy = (params) => {
+        return petModel.findOne(params);
+    }
+
+    save = (doc) => {
+        return petModel.create(doc);
+    }
+
+    update = (id, doc) => {
+        return petModel.findByIdAndUpdate(id, {$set: doc})
+    }
+
+    delete = (id) => {
+        return petModel.findByIdAndDelete(id);
+    }
+}
+```
+</CodeGroup>
+
+### Models Layer
+
+Models define the MongoDB schema using Mongoose. They specify field types, validation rules, and relationships.
+
+<CodeGroup>
+```javascript models/Pet.js
+import mongoose from "mongoose";
+
+const collection = "adopme_pets";
+
+const schema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: true,
+  },
+  specie: {
+    type: String,
+    required: true,
+  },
+  birthDate: Date,
+  adopted: {
+    type: Boolean,
+    default: false,
+  },
+  owner: {
+    type: mongoose.SchemaTypes.ObjectId,
+    ref: "Users",
+  },
+  image: String,
+});
+
+const petModel = mongoose.model(collection, schema);
+export default petModel;
+```
+</CodeGroup>
+
+## Complete Request Flow
+
+Here's how a typical request flows through all layers:
+
+<Steps>
+  <Step title="Client makes request">
+    `POST /api/pets` with pet data in request body
+  </Step>
+  <Step title="Route matches endpoint">
+    Router forwards request to `petsController.createPet`
+  </Step>
+  <Step title="Controller validates input">
+    Checks for required fields, returns 400 if missing
+  </Step>
+  <Step title="Controller calls service">
+    `petsService.create(pet)` is invoked
+  </Step>
+  <Step title="Repository delegates to DAO">
+    `PetRepository` calls `Pet.dao.save(doc)`
+  </Step>
+  <Step title="DAO interacts with database">
+    Mongoose `petModel.create(doc)` creates MongoDB document
+  </Step>
+  <Step title="Response flows back">
+    Created pet data flows back through layers to client
+  </Step>
+</Steps>
+
+## Benefits of This Architecture
+
+<CardGroup cols={2}>
+  <Card title="Separation of Concerns" icon="layer-group">
+    Each layer has a specific responsibility, making code easier to understand and maintain
+  </Card>
+  <Card title="Testability" icon="flask">
+    Layers can be tested independently by mocking dependencies
+  </Card>
+  <Card title="Flexibility" icon="wand-magic-sparkles">
+    Easy to swap implementations (e.g., change database) without affecting other layers
+  </Card>
+  <Card title="Reusability" icon="recycle">
+    Generic repository pattern eliminates code duplication across entities
+  </Card>
+</CardGroup>
+
+## Example: Complex Operation
+
+Here's how the adoption creation process demonstrates the architecture:
+
+```javascript adoptions.controller.js
+const createAdoption = async (req, res) => {
+  const { uid, pid } = req.params;
+  
+  // Retrieve user through service/repository/DAO/model
+  const user = await usersService.getUserById(uid);
+  if (!user)
+    return res.status(404).send({ status: "error", error: "user Not found" });
+  
+  // Retrieve pet through service/repository/DAO/model
+  const pet = await petsService.getBy({ _id: pid });
+  if (!pet)
+    return res.status(404).send({ status: "error", error: "Pet not found" });
+  if (pet.adopted)
+    return res.status(400).send({ status: "error", error: "Pet is already adopted" });
+  
+  // Update multiple entities
+  user.pets.push(pet._id);
+  await usersService.update(user._id, { pets: user.pets });
+  await petsService.update(pet._id, { adopted: true, owner: user._id });
+  await adoptionsService.create({ owner: user._id, pet: pet._id });
+  
+  res.send({ status: "success", message: "Pet adopted" });
+};
+```
+
+<Warning>
+  This operation touches multiple services, demonstrating how the controller orchestrates complex business logic.
+</Warning>

@@ -1,0 +1,65 @@
+---
+title: "Get Adoption By ID"
+api: "GET /api/adoptions/:aid"
+description: "Retrieve a specific adoption record by its ID"
+---
+
+This endpoint returns detailed information about a specific adoption record.
+
+## Request
+
+<ParamField path="aid" type="string" required>
+  The unique identifier of the adoption record
+</ParamField>
+
+```bash
+curl -X GET https://your-api-domain.com/api/adoptions/507f1f77bcf86cd799439011
+```
+
+## Response
+
+<ResponseField name="status" type="string" required>
+  The status of the response (e.g., "success" or "error")
+</ResponseField>
+
+<ResponseField name="payload" type="object">
+  The adoption record (present on success)
+  
+  <ResponseField name="_id" type="string">
+    Unique identifier for the adoption record
+  </ResponseField>
+  
+  <ResponseField name="owner" type="string">
+    Reference to the User ID who adopted the pet
+  </ResponseField>
+  
+  <ResponseField name="pet" type="string">
+    Reference to the Pet ID that was adopted
+  </ResponseField>
+</ResponseField>
+
+<ResponseField name="error" type="string">
+  Error message (present on failure)
+</ResponseField>
+
+### Success Response (200)
+
+```json
+{
+  "status": "success",
+  "payload": {
+    "_id": "507f1f77bcf86cd799439011",
+    "owner": "507f191e810c19729de860ea",
+    "pet": "507f191e810c19729de860eb"
+  }
+}
+```
+
+### Error Response (404)
+
+```json
+{
+  "status": "error",
+  "error": "Adoption not found"
+}
+```

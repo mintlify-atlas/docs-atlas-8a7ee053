@@ -1,0 +1,81 @@
+---
+title: 'Get All Pets'
+api: 'GET /api/pets'
+---
+
+Retrieve a list of all pets in the adoption system.
+
+## Request
+
+No parameters required.
+
+## Response
+
+<ResponseField name="status" type="string">
+  Response status indicator ("success")
+</ResponseField>
+
+<ResponseField name="payload" type="array">
+  Array of pet objects
+  
+  <ResponseField name="_id" type="string">
+    Unique identifier for the pet
+  </ResponseField>
+  
+  <ResponseField name="name" type="string">
+    Name of the pet
+  </ResponseField>
+  
+  <ResponseField name="specie" type="string">
+    Species of the pet (e.g., dog, cat)
+  </ResponseField>
+  
+  <ResponseField name="birthDate" type="string">
+    Birth date of the pet in ISO 8601 format
+  </ResponseField>
+  
+  <ResponseField name="adopted" type="boolean">
+    Whether the pet has been adopted (default: false)
+  </ResponseField>
+  
+  <ResponseField name="owner" type="string" optional>
+    ID of the user who adopted the pet (if adopted)
+  </ResponseField>
+  
+  <ResponseField name="image" type="string" optional>
+    Path to the pet's image file
+  </ResponseField>
+</ResponseField>
+
+## Example Request
+
+```bash cURL
+curl -X GET https://api.example.com/api/pets \
+  -H "Content-Type: application/json"
+```
+
+## Example Response
+
+```json
+{
+  "status": "success",
+  "payload": [
+    {
+      "_id": "507f1f77bcf86cd799439011",
+      "name": "Buddy",
+      "specie": "dog",
+      "birthDate": "2020-05-15T00:00:00.000Z",
+      "adopted": false,
+      "image": "/public/img/buddy.jpg"
+    },
+    {
+      "_id": "507f1f77bcf86cd799439012",
+      "name": "Whiskers",
+      "specie": "cat",
+      "birthDate": "2019-08-22T00:00:00.000Z",
+      "adopted": true,
+      "owner": "507f1f77bcf86cd799439099"
+    }
+  ]
+}
+```

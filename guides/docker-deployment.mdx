@@ -1,0 +1,417 @@
+---
+title: 'Docker Deployment'
+description: 'Deploy the Pet Adoption API using Docker containers'
+icon: 'docker'
+---
+
+## Overview
+
+Docker provides a containerized deployment solution for the Pet Adoption API, ensuring consistency across different environments and simplifying deployment.
+
+<Info>
+  Docker containers package the application with all its dependencies, making it easy to deploy anywhere Docker is supported.
+</Info>
+
+## Prerequisites
+
+<CardGroup cols={2}>
+  <Card title="Docker" icon="docker">
+    Docker Engine 20.x or higher
+  </Card>
+  <Card title="Docker Compose" icon="layer-group">
+    Optional, for orchestrating multiple containers
+  </Card>
+</CardGroup>
+
+### Install Docker
+
+If you don't have Docker installed:
+
+<Tabs>
+  <Tab title="macOS">
+    Download and install [Docker Desktop for Mac](https://docs.docker.com/desktop/install/mac-install/)
+    
+    Verify installation:
+    ```bash
+    docker --version
+    ```
+  </Tab>
+  
+  <Tab title="Windows">
+    Download and install [Docker Desktop for Windows](https://docs.docker.com/desktop/install/windows-install/)
+    
+    Verify installation:
+    ```bash
+    docker --version
+    ```
+  </Tab>
+  
+  <Tab title="Linux">
+    Install using your package manager:
+    
+    **Ubuntu/Debian:**
+    ```bash
+    sudo apt-get update
+    sudo apt-get install docker-ce docker-ce-cli containerd.io
+    ```
+    
+    **Fedora:**
+    ```bash
+    sudo dnf install docker-ce docker-ce-cli containerd.io
+    ```
+    
+    Start Docker service:
+    ```bash
+    sudo systemctl start docker
+    sudo systemctl enable docker
+    ```
+  </Tab>
+</Tabs>
+
+## Dockerfile Configuration
+
+The Pet Adoption API includes a Dockerfile in the `docker/` directory:
+
+```dockerfile docker/Dockerfile
+FROM node
+
+COPY . .
+
+RUN npm install 
+
+EXPOSE 8080
+
+CMD ["npm", "start"]
+```
+
+<Accordion title="Understanding the Dockerfile">
+  - **FROM node**: Uses the official Node.js base image
+  - **COPY . .**: Copies all project files into the container
+  - **RUN npm install**: Installs all dependencies inside the container
+  - **EXPOSE 8080**: Documents that the container listens on port 8080
+  - **CMD ["npm", "start"]**: Starts the application using the start script
+</Accordion>
+
+## Building the Docker Image
+
+<Steps>
+  <Step title="Navigate to Project Root">
+    Ensure you're in the root directory of the project where the `docker/` folder is located:
+    
+    ```bash
+    cd /path/to/pet-adoption-api
+    ```
+  </Step>
+  
+  <Step title="Build the Image">
+    Build the Docker image using the Dockerfile:
+    
+    ```bash
+    docker build -f docker/Dockerfile -t pet-adoption-api:latest .
+    ```
+    
+    <Info>
+      The `-f docker/Dockerfile` flag specifies the Dockerfile location, `-t` tags the image with a name, and `.` sets the build context to the current directory.
+    </Info>
+    
+    This process will:
+    - Download the base Node.js image
+    - Copy your application files
+    - Install all npm dependencies
+    - Create a ready-to-run container image
+  </Step>
+  
+  <Step title="Verify the Image">
+    Confirm the image was created successfully:
+    
+    ```bash
+    docker images
+    ```
+    
+    You should see `pet-adoption-api` in the list with the `latest` tag.
+  </Step>
+</Steps>
+
+## Running the Container
+
+### Basic Run Command
+
+Start a container from your built image:
+
+```bash
+docker run -d \
+  --name pet-adoption \
+  -p 8080:8080 \
+  -e MONGO_URL="mongodb://host.docker.internal:27017/petadoption" \
+  -e JWT_SECRET="your_secure_jwt_secret" \
+  pet-adoption-api:latest
+```
+
+<ParamField path="-d" type="flag">
+  Runs the container in detached mode (background)
+</ParamField>
+
+<ParamField path="--name" type="string">
+  Assigns a name to the container for easy reference
+</ParamField>
+
+<ParamField path="-p" type="port mapping">
+  Maps host port 8080 to container port 8080
+</ParamField>
+
+<ParamField path="-e" type="environment">
+  Sets environment variables for database connection and JWT secret
+</ParamField>
+
+<Warning>
+  When running MongoDB on your host machine, use `host.docker.internal` instead of `localhost` to connect from the Docker container.
+</Warning>
+
+### With Environment File
+
+Alternatively, create a `.env.docker` file with your environment variables:
+
+```bash .env.docker
+PORT=8080
+MONGO_URL=mongodb://host.docker.internal:27017/petadoption
+JWT_SECRET=your_secure_jwt_secret
+```
+
+Then run with:
+
+```bash
+docker run -d \
+  --name pet-adoption \
+  -p 8080:8080 \
+  --env-file .env.docker \
+  pet-adoption-api:latest
+```
+
+## Container Management
+
+### View Running Containers
+
+```bash
+docker ps
+```
+
+### View Container Logs
+
+```bash
+docker logs pet-adoption
+
+# Follow logs in real-time
+docker logs -f pet-adoption
+```
+
+### Stop the Container
+
+```bash
+docker stop pet-adoption
+```
+
+### Start a Stopped Container
+
+```bash
+docker start pet-adoption
+```
+
+### Remove the Container
+
+```bash
+docker rm pet-adoption
+
+# Force remove a running container
+docker rm -f pet-adoption
+```
+
+## Docker Compose Setup
+
+For a complete development environment with MongoDB included, create a `docker-compose.yml` file:
+
+```yaml docker-compose.yml
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:6.0
+    container_name: pet-adoption-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    environment:
+      MONGO_INITDB_DATABASE: petadoption
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: pet-adoption-api
+    ports:
+      - "8080:8080"
+    environment:
+      PORT: 8080
+      MONGO_URL: mongodb://mongodb:27017/petadoption
+      JWT_SECRET: your_secure_jwt_secret_here
+    depends_on:
+      - mongodb
+    restart: unless-stopped
+
+volumes:
+  mongodb_data:
+```
+
+### Running with Docker Compose
+
+<Steps>
+  <Step title="Start All Services">
+    ```bash
+    docker-compose up -d
+    ```
+    
+    This will start both MongoDB and the API in separate containers.
+  </Step>
+  
+  <Step title="View Logs">
+    ```bash
+    # All services
+    docker-compose logs -f
+    
+    # Specific service
+    docker-compose logs -f api
+    ```
+  </Step>
+  
+  <Step title="Stop All Services">
+    ```bash
+    docker-compose down
+    
+    # Remove volumes as well
+    docker-compose down -v
+    ```
+  </Step>
+</Steps>
+
+## Production Deployment
+
+For production deployments, consider these best practices:
+
+<CardGroup cols={2}>
+  <Card title="Multi-stage Build" icon="layer-group">
+    Use multi-stage Dockerfile to reduce image size:
+    
+    ```dockerfile
+    FROM node:18-alpine AS builder
+    WORKDIR /app
+    COPY package*.json ./
+    RUN npm ci --only=production
+    
+    FROM node:18-alpine
+    WORKDIR /app
+    COPY --from=builder /app/node_modules ./node_modules
+    COPY . .
+    EXPOSE 8080
+    CMD ["npm", "start"]
+    ```
+  </Card>
+  
+  <Card title="Health Checks" icon="heart-pulse">
+    Add health check to Dockerfile:
+    
+    ```dockerfile
+    HEALTHCHECK --interval=30s --timeout=3s \
+      CMD node healthcheck.js
+    ```
+  </Card>
+  
+  <Card title="Non-root User" icon="user-shield">
+    Run as non-root user for security:
+    
+    ```dockerfile
+    RUN addgroup -g 1001 -S nodejs
+    RUN adduser -S nodejs -u 1001
+    USER nodejs
+    ```
+  </Card>
+  
+  <Card title="Environment Variables" icon="key">
+    Use secrets management for sensitive data instead of environment variables
+  </Card>
+</CardGroup>
+
+## Verify Deployment
+
+<Steps>
+  <Step title="Check Container Status">
+    ```bash
+    docker ps
+    ```
+    
+    Ensure your container is running and shows "Up" status.
+  </Step>
+  
+  <Step title="Access API Documentation">
+    Open your browser and navigate to:
+    
+    ```
+    http://localhost:8080/apidocs
+    ```
+  </Step>
+  
+  <Step title="Test an Endpoint">
+    ```bash
+    curl http://localhost:8080/api/pets
+    ```
+  </Step>
+</Steps>
+
+<Check>
+  Your Pet Adoption API is now running in a Docker container!
+</Check>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Cannot connect to MongoDB">
+    If the API can't connect to MongoDB:
+    
+    - For local MongoDB: Use `host.docker.internal` instead of `localhost`
+    - For Docker Compose: Use the service name (e.g., `mongodb`) as the hostname
+    - Ensure MongoDB container is running: `docker ps`
+    - Check network connectivity: `docker network inspect bridge`
+  </Accordion>
+  
+  <Accordion title="Build fails with permission errors">
+    On Linux, you may need to add your user to the docker group:
+    
+    ```bash
+    sudo usermod -aG docker $USER
+    # Log out and back in for changes to take effect
+    ```
+  </Accordion>
+  
+  <Accordion title="Container exits immediately">
+    Check the container logs for errors:
+    
+    ```bash
+    docker logs pet-adoption
+    ```
+    
+    Common issues:
+    - Missing or incorrect environment variables
+    - MongoDB connection failure
+    - Port already in use on the host
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Testing" icon="flask" href="/guides/testing">
+    Learn how to run tests in your Docker environment
+  </Card>
+  <Card title="API Reference" icon="book" href="/api/sessions/register">
+    Explore all available endpoints
+  </Card>
+</CardGroup>

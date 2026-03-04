@@ -1,0 +1,85 @@
+---
+title: "Get All Users"
+api: "GET /api/users"
+description: "Retrieve a list of all users from the database"
+---
+
+This endpoint retrieves all users registered in the Pet Adoption system.
+
+## Response
+
+<ResponseField name="status" type="string">
+  Status of the response (e.g., "success")
+</ResponseField>
+
+<ResponseField name="payload" type="array">
+  Array of user objects
+  
+  <ResponseField name="_id" type="string">
+    Auto-generated MongoDB ObjectId
+  </ResponseField>
+  
+  <ResponseField name="first_name" type="string">
+    User's first name
+  </ResponseField>
+  
+  <ResponseField name="last_name" type="string">
+    User's last name
+  </ResponseField>
+  
+  <ResponseField name="email" type="string">
+    User's email address (unique)
+  </ResponseField>
+  
+  <ResponseField name="password" type="string">
+    User's hashed password
+  </ResponseField>
+  
+  <ResponseField name="role" type="string" default="user">
+    User's role (e.g., "user" or "admin")
+  </ResponseField>
+  
+  <ResponseField name="pets" type="array">
+    Array of pet references associated with the user
+    
+    <ResponseField name="_id" type="string">
+      MongoDB ObjectId reference to a Pet
+    </ResponseField>
+  </ResponseField>
+</ResponseField>
+
+## Example Request
+
+```bash curl
+curl --request GET \
+  --url http://localhost:8000/api/users
+```
+
+## Example Response
+
+```json
+{
+  "status": "success",
+  "payload": [
+    {
+      "_id": "ObjectId(alñdkjsasdjfoadsfa6sdf6as4fd9asdf)",
+      "first_name": "Justina",
+      "last_name": "Mutigliengo",
+      "email": "j@gmail.com",
+      "password": "$eghio436jlmglkf9ej3hgdlmh",
+      "role": "user",
+      "pets": []
+    }
+  ]
+}
+```
+
+## Status Codes
+
+<ResponseField name="200" type="Success">
+  Users were successfully retrieved from the database
+</ResponseField>
+
+<ResponseField name="500" type="Error">
+  Internal server error, usually caused by a defective query or database connection failure
+</ResponseField>

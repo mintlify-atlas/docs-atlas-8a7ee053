@@ -1,0 +1,124 @@
+---
+title: 'Generate Data'
+api: 'POST /api/mocks/generateData'
+description: 'Generate and persist custom quantities of users and pets to the database'
+---
+
+## Overview
+
+This endpoint generates and persists custom quantities of users and pets to the database using Faker.js. Unlike the `/mockingusers` endpoint, this creates actual database records and returns a summary of the operation.
+
+## Endpoint
+
+```
+POST /api/mocks/generateData
+```
+
+## Request
+
+<ParamField body="users" type="integer" required>
+  Number of users to generate. Must be greater than 0.
+</ParamField>
+
+<ParamField body="pets" type="integer" required>
+  Number of pets to generate. Must be greater than 0.
+</ParamField>
+
+### Example Request
+
+```bash cURL
+curl -X POST http://localhost:8080/api/mocks/generateData \
+  -H "Content-Type: application/json" \
+  -d '{
+    "users": 10,
+    "pets": 20
+  }'
+```
+
+## Response
+
+<ResponseField name="message" type="string" required>
+  Success message confirming data generation
+</ResponseField>
+
+<ResponseField name="users" type="integer" required>
+  Total number of users in the database after generation
+</ResponseField>
+
+<ResponseField name="pets" type="integer" required>
+  Total number of pets in the database after generation
+</ResponseField>
+
+### Success Response
+
+```json 201 - Created
+{
+  "message": "Data generated successfully",
+  "users": 25,
+  "pets": 45
+}
+```
+
+### Error Responses
+
+```json 400 - Bad Request
+{
+  "error": "Invalid number of users or pets"
+}
+```
+
+```json 500 - Internal Server Error
+{
+  "error": "Error generating data"
+}
+```
+
+## Generated Data Structure
+
+### Users
+
+Each generated user includes:
+
+- **username**: Random username from `faker.internet.userName()`
+- **password**: Default value `coder123` (not hashed in database)
+- **role**: Randomly assigned `user` or `admin`
+- **email**: Random email from `faker.internet.email()`
+- **first_name**: Random first name from `faker.name.firstName()`
+- **last_name**: Random last name from `faker.name.lastName()`
+- **pets**: Empty array
+
+### Pets
+
+Each generated pet includes:
+
+- **name**: Random dog name from `faker.animal.dog()`
+- **age**: Random number between 1-15
+- **breed**: Random dog breed from `faker.animal.dog()`
+- **specie**: Randomly assigned from: `dog`, `cat`, `bird`, `hamster`
+
+## Validation
+
+- Both `users` and `pets` parameters are required
+- Both values must be greater than 0
+- Missing or invalid parameters return a 400 error
+
+## Implementation Notes
+
+- **Database Persistence**: All generated data is saved to the database
+- **Sequential Creation**: Users and pets are created sequentially, not in parallel
+- **Total Counts**: Response includes total counts of all users and pets in the database, not just newly created ones
+- **No Associations**: Generated users and pets are not linked together; pets arrays remain empty
+- **Password Storage**: Unlike `/mockingusers`, passwords are stored as plain text `coder123` (not bcrypt hashed)
+
+## Example Use Cases
+
+- Populate a fresh database for development
+- Create test data for integration testing
+- Generate large datasets for performance testing
+- Set up demo environments with realistic data
+
+## Related Endpoints
+
+<Card title="Generate Mock Users" icon="users" href="/api/mocks/generate-users">
+  Generate 50 mock users without database persistence
+</Card>

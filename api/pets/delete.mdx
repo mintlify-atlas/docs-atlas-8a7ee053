@@ -1,0 +1,38 @@
+---
+title: 'Delete Pet'
+api: 'DELETE /api/pets/:pid'
+---
+
+Delete a pet from the adoption system.
+
+## Path Parameters
+
+<ParamField path="pid" type="string" required>
+  The unique identifier of the pet to delete
+</ParamField>
+
+## Response
+
+<ResponseField name="status" type="string">
+  Response status indicator ("success")
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Confirmation message ("pet deleted")
+</ResponseField>
+
+## Example Request
+
+```bash cURL
+curl -X DELETE https://api.example.com/api/pets/507f1f77bcf86cd799439011 \
+  -H "Content-Type: application/json"
+```
+
+## Example Response
+
+```json
+{
+  "status": "success",
+  "message": "pet deleted"
+}
+```

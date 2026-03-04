@@ -1,0 +1,557 @@
+---
+title: 'Testing Guide'
+description: 'Run and write tests for the Pet Adoption API using Mocha, Chai, and Supertest'
+icon: 'flask'
+---
+
+## Overview
+
+The Pet Adoption API uses a comprehensive testing stack to ensure reliability and correctness:
+
+<CardGroup cols={3}>
+  <Card title="Mocha" icon="vial">
+    Test framework for running tests
+  </Card>
+  <Card title="Chai" icon="check">
+    Assertion library for readable test expectations
+  </Card>
+  <Card title="Supertest" icon="bolt">
+    HTTP assertion library for API testing
+  </Card>
+</CardGroup>
+
+## Test Structure
+
+Tests are located in the `test/` directory and organized by functionality:
+
+```
+test/
+├── adoption.router.test.js    # Integration tests for adoptions
+├── supertest.test.js          # Integration tests for users/sessions
+├── Users.dao.test.js          # Unit tests for Users DAO
+└── Users.dao.chai.test.js     # Alternative Chai-based DAO tests
+```
+
+## Running Tests
+
+<Steps>
+  <Step title="Ensure Server is Running">
+    The integration tests require the API server to be running on port 8000:
+    
+    ```bash
+    # In a separate terminal
+    PORT=8000 npm start
+    ```
+    
+    <Warning>
+      Tests are configured to connect to `http://localhost:8000`. Make sure no other service is using this port.
+    </Warning>
+  </Step>
+  
+  <Step title="Run the Test Suite">
+    Execute all tests using the npm test script:
+    
+    ```bash
+    npm test
+    ```
+    
+    This runs the test suite defined in `package.json`:
+    ```json
+    "test": "mocha test/adoption.router.test.js"
+    ```
+  </Step>
+  
+  <Step title="Run Specific Test Files">
+    You can run individual test files using Mocha directly:
+    
+    ```bash
+    # Run adoption tests
+    npx mocha test/adoption.router.test.js
+    
+    # Run user/session tests
+    npx mocha test/supertest.test.js
+    
+    # Run all tests
+    npx mocha test/**/*.test.js
+    ```
+  </Step>
+</Steps>
+
+## Test Examples
+
+### Integration Tests: Adoptions
+
+The adoption test suite validates the complete adoption workflow:
+
+```javascript test/adoption.router.test.js
+import chai from "chai";
+import supertest from "supertest";
+
+const { expect } = chai;
+const requester = supertest("http://localhost:8000");
+
+const testUser = {
+  first_name: "Pablo",
+  last_name: "Perez",
+  email: "pperez@gmail.com",
+  password: "abc123",
+};
+const testPet = { name: "Milo", species: "Dog", adopted: false };
+let userId = "";
+let petId = "";
+let adoptionId = "";
+
+describe("Test de Integración Adoption", function () {
+  it("POST /api/users debe registrar un nuevo usuario", async function () {
+    const { statusCode, _body } = await requester
+      .post("/api/users")
+      .send(testUser);
+
+    expect(statusCode).to.be.equals(200);
+    expect(_body.status).to.be.equals("success");
+    expect(_body.payload).to.have.property("_id");
+    userId = _body.payload._id;
+  });
+
+  it("POST /api/pets debe registrar una nueva mascota", async function () {
+    const { statusCode, _body } = await requester
+      .post("/api/pets")
+      .send(testPet);
+
+    expect(statusCode).to.be.equals(200);
+    expect(_body.status).to.be.equals("success");
+    expect(_body.payload).to.have.property("_id");
+    petId = _body.payload._id;
+  });
+
+  it("POST /api/adoptions/:uid/:pid debe crear una adopción correctamente", async function () {
+    const { statusCode, _body } = await requester
+      .post(`/api/adoptions/${userId}/${petId}`)
+      .send();
+
+    expect(statusCode).to.be.equals(200);
+    expect(_body.status).to.be.equals("success");
+    expect(_body.message).to.be.equals("Pet adopted");
+    adoptionId = _body.payload._id;
+  });
+});
+```
+
+<Accordion title="What This Test Validates">
+  This test suite ensures:
+  
+  1. **User Creation**: New users can be registered via POST `/api/users`
+  2. **Pet Creation**: New pets can be added via POST `/api/pets`
+  3. **Adoption Process**: Users can adopt available pets
+  4. **Adoption Prevention**: Already adopted pets cannot be adopted again
+  5. **Adoption Retrieval**: Adoptions can be fetched by ID
+  6. **Error Handling**: Invalid adoption IDs return proper 404 errors
+</Accordion>
+
+### Integration Tests: Users & Sessions
+
+The user/session test suite validates authentication flows:
+
+```javascript test/supertest.test.js
+import chai from "chai";
+import supertest from "supertest";
+
+const expect = chai.expect;
+const requester = supertest("http://localhost:8000");
+
+const testUser = {
+  first_name: "Pablo",
+  last_name: "Perez",
+  email: "pperez@gmail.com",
+  password: "abc123",
+};
+let cookie = {};
+
+describe("Test Integración Users", function () {
+  it("POST /api/sessions/register debe registrar un nuevo usuario", async function () {
+    const { _body } = await requester
+      .post("/api/sessions/register")
+      .send(testUser);
+
+    expect(_body.error).to.be.undefined;
+    expect(_body.payload).to.be.ok;
+  });
+
+  it("POST /api/sessions/login debe ingresar correctamente al usuario", async function () {
+    const result = await requester.post("/api/sessions/login").send(testUser);
+    const cookieData = result.headers["set-cookie"][0];
+    cookie = {
+      name: cookieData.split("=")[0],
+      value: cookieData.split("=")[1],
+    };
+
+    expect(cookieData).to.be.ok;
+    expect(cookie.name).to.be.equals("coderCookie");
+    expect(cookie.value).to.be.ok;
+  });
+
+  it("GET /api/sessions/current debe retornar datos correctos de usuario", async function () {
+    const { _body } = await requester
+      .get("/api/sessions/current")
+      .set("Cookie", [`${cookie.name}=${cookie.value}`]);
+
+    expect(_body.payload).to.have.property("name");
+    expect(_body.payload).to.have.property("role");
+    expect(_body.payload)
+      .to.have.property("email")
+      .and.to.be.eql(testUser.email);
+  });
+});
+```
+
+<Accordion title="What This Test Validates">
+  This test suite ensures:
+  
+  1. **User Registration**: New users can register via `/api/sessions/register`
+  2. **Duplicate Prevention**: The same email cannot be registered twice
+  3. **User Login**: Users can login with correct credentials
+  4. **Cookie Authentication**: Login returns a valid authentication cookie
+  5. **Session Retrieval**: Current user data can be fetched with valid cookie
+</Accordion>
+
+## Writing New Tests
+
+Follow this structure when creating new tests:
+
+### Basic Test Template
+
+```javascript
+import chai from "chai";
+import supertest from "supertest";
+
+const { expect } = chai;
+const requester = supertest("http://localhost:8000");
+
+describe("Feature Name Tests", function () {
+  // Setup before all tests
+  before(function () {
+    // Runs once before all tests in this describe block
+  });
+
+  // Setup before each test
+  beforeEach(function () {
+    // Runs before each test
+  });
+
+  // Cleanup after all tests
+  after(function () {
+    // Runs once after all tests in this describe block
+  });
+
+  // Cleanup after each test
+  afterEach(function () {
+    // Runs after each test
+  });
+
+  it("should do something specific", async function () {
+    // Arrange: Set up test data
+    const testData = { name: "Test" };
+
+    // Act: Perform the action
+    const { statusCode, _body } = await requester
+      .post("/api/endpoint")
+      .send(testData);
+
+    // Assert: Verify the results
+    expect(statusCode).to.equal(200);
+    expect(_body).to.have.property("status", "success");
+  });
+});
+```
+
+### Common Chai Assertions
+
+<CodeGroup>
+
+```javascript Equality
+// Strict equality
+expect(value).to.equal(expected);
+expect(value).to.be.equals(expected);
+
+// Deep equality for objects
+expect(obj).to.deep.equal({ key: "value" });
+expect(obj).to.eql({ key: "value" });
+```
+
+```javascript Properties
+// Check property exists
+expect(obj).to.have.property("key");
+
+// Check property with value
+expect(obj).to.have.property("key", "value");
+
+// Multiple properties
+expect(obj).to.include.keys(["key1", "key2"]);
+```
+
+```javascript Types
+// Check types
+expect(value).to.be.a("string");
+expect(value).to.be.an("array");
+expect(value).to.be.undefined;
+expect(value).to.be.ok; // truthy
+```
+
+```javascript Numbers
+// Comparisons
+expect(value).to.be.above(5);
+expect(value).to.be.below(10);
+expect(value).to.be.within(5, 10);
+```
+
+</CodeGroup>
+
+### Testing HTTP Endpoints with Supertest
+
+<CodeGroup>
+
+```javascript GET Requests
+// Simple GET
+const response = await requester.get("/api/endpoint");
+
+// With query parameters
+const response = await requester
+  .get("/api/endpoint")
+  .query({ limit: 10, offset: 0 });
+
+// With headers
+const response = await requester
+  .get("/api/endpoint")
+  .set("Authorization", "Bearer token");
+```
+
+```javascript POST Requests
+// POST with JSON body
+const response = await requester
+  .post("/api/endpoint")
+  .send({ key: "value" });
+
+// POST with form data
+const response = await requester
+  .post("/api/endpoint")
+  .field("name", "value")
+  .attach("file", "path/to/file.jpg");
+```
+
+```javascript Other Methods
+// PUT request
+const response = await requester
+  .put("/api/endpoint/:id")
+  .send({ key: "value" });
+
+// DELETE request
+const response = await requester
+  .delete("/api/endpoint/:id");
+```
+
+```javascript Cookies
+// Set cookie
+const response = await requester
+  .get("/api/endpoint")
+  .set("Cookie", [`name=value`]);
+
+// Extract cookie from response
+const cookieHeader = response.headers["set-cookie"][0];
+const [name, value] = cookieHeader.split("=");
+```
+
+</CodeGroup>
+
+## Test Configuration
+
+### Mocha Options
+
+You can configure Mocha using a `.mocharc.json` file:
+
+```json .mocharc.json
+{
+  "timeout": 10000,
+  "recursive": true,
+  "spec": "test/**/*.test.js",
+  "require": "test/setup.js",
+  "reporter": "spec",
+  "slow": 2000
+}
+```
+
+<ParamField path="timeout" type="number" default="2000">
+  Test timeout in milliseconds
+</ParamField>
+
+<ParamField path="recursive" type="boolean" default="false">
+  Look for tests in subdirectories
+</ParamField>
+
+<ParamField path="spec" type="string">
+  Test file pattern to match
+</ParamField>
+
+<ParamField path="reporter" type="string" default="spec">
+  Output format (spec, json, dot, etc.)
+</ParamField>
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Test Isolation" icon="cube">
+    Each test should be independent and not rely on the state from other tests. Use `beforeEach` to set up fresh test data.
+  </Card>
+  
+  <Card title="Clear Test Names" icon="text">
+    Write descriptive test names that explain what is being tested:
+    
+    ```javascript
+    // Good
+    it("should return 404 when pet ID does not exist")
+    
+    // Bad
+    it("test pet")
+    ```
+  </Card>
+  
+  <Card title="Test One Thing" icon="bullseye">
+    Each test should validate a single behavior or scenario. Split complex tests into multiple smaller tests.
+  </Card>
+  
+  <Card title="Use Descriptive Variables" icon="code">
+    Name your test data clearly:
+    
+    ```javascript
+    const validUser = { /* ... */ };
+    const userWithInvalidEmail = { /* ... */ };
+    ```
+  </Card>
+</CardGroup>
+
+## Test Coverage
+
+To measure test coverage, you can use NYC (Istanbul):
+
+<Steps>
+  <Step title="Install NYC">
+    ```bash
+    npm install --save-dev nyc
+    ```
+  </Step>
+  
+  <Step title="Update package.json">
+    ```json package.json
+    {
+      "scripts": {
+        "test": "mocha test/adoption.router.test.js",
+        "test:coverage": "nyc npm test"
+      }
+    }
+    ```
+  </Step>
+  
+  <Step title="Run with Coverage">
+    ```bash
+    npm run test:coverage
+    ```
+    
+    This will display a coverage report showing which lines of code are tested.
+  </Step>
+</Steps>
+
+## Running Tests in Docker
+
+To run tests inside a Docker container:
+
+```bash
+# Build the test image
+docker build -f docker/Dockerfile -t pet-adoption-test .
+
+# Run tests
+docker run --rm \
+  -e MONGO_URL="mongodb://host.docker.internal:27017/petadoption_test" \
+  pet-adoption-test \
+  npm test
+```
+
+<Tip>
+  Use a separate test database (e.g., `petadoption_test`) to avoid interfering with development data.
+</Tip>
+
+## Continuous Integration
+
+Example GitHub Actions workflow for running tests:
+
+```yaml .github/workflows/test.yml
+name: Run Tests
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    services:
+      mongodb:
+        image: mongo:6.0
+        ports:
+          - 27017:27017
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      
+      - name: Install dependencies
+        run: npm install
+      
+      - name: Run tests
+        run: npm test
+        env:
+          MONGO_URL: mongodb://localhost:27017/petadoption_test
+          PORT: 8000
+```
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Tests timeout">
+    If tests are timing out:
+    
+    - Increase the Mocha timeout: `this.timeout(10000);` in your test
+    - Ensure the API server is running on the correct port
+    - Check MongoDB is accessible and responding
+  </Accordion>
+  
+  <Accordion title="Connection refused errors">
+    - Verify the API server is running: `curl http://localhost:8000/api/pets`
+    - Check the port number matches in both server and tests
+    - Ensure no firewall is blocking the connection
+  </Accordion>
+  
+  <Accordion title="Tests fail intermittently">
+    - Tests may not be properly isolated - check for shared state
+    - Add delays between tests if needed: `await new Promise(r => setTimeout(r, 100))`
+    - Use `beforeEach` to reset data between tests
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Setup Guide" icon="gear" href="/guides/setup">
+    Learn how to set up the development environment
+  </Card>
+  <Card title="Docker Deployment" icon="docker" href="/guides/docker-deployment">
+    Deploy the API using Docker
+  </Card>
+  <Card title="API Reference" icon="book" href="/api/sessions/register">
+    Explore all available endpoints
+  </Card>
+  <Card title="Error Handling" icon="triangle-exclamation" href="/concepts/error-handling">
+    Learn about error responses
+  </Card>
+</CardGroup>

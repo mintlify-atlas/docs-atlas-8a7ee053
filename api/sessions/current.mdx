@@ -1,0 +1,56 @@
+---
+title: 'Get Current User'
+api: 'GET /api/sessions/current'
+description: 'Retrieve the currently authenticated user from JWT cookie'
+---
+
+## Authentication
+
+This endpoint requires a valid JWT cookie named `coderCookie` to be present in the request. The cookie is automatically set after successful login.
+
+## Response
+
+<ResponseField name="status" type="string">
+  Status of the request - "success"
+</ResponseField>
+
+<ResponseField name="payload" type="object">
+  User data extracted from the JWT token
+  
+  <ResponseField name="payload.name" type="string">
+    User's name
+  </ResponseField>
+  
+  <ResponseField name="payload.email" type="string">
+    User's email address
+  </ResponseField>
+  
+  <ResponseField name="payload.role" type="string">
+    User's role
+  </ResponseField>
+</ResponseField>
+
+## Example Request
+
+```bash cURL
+curl -X GET https://api.petadoption.com/api/sessions/current \
+  -H "Content-Type: application/json" \
+  -b cookies.txt
+```
+
+## Example Response
+
+```json Success (200)
+{
+  "status": "success",
+  "payload": {
+    "name": "John Doe",
+    "email": "john.doe@example.com",
+    "role": "user"
+  }
+}
+```
+
+## Error Handling
+
+If the JWT cookie is missing or invalid, the endpoint will throw a JWT verification error. Ensure the user is logged in before calling this endpoint.

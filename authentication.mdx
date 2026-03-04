@@ -1,0 +1,476 @@
+---
+title: 'Authentication'
+description: 'Learn how to authenticate with the Pet Adoption API using JWT tokens and cookie-based sessions'
+icon: 'shield-halved'
+---
+
+## Overview
+
+The Pet Adoption API uses **JWT (JSON Web Token)** authentication combined with **HTTP-only cookies** to secure endpoints. This approach provides a balance between security and ease of use.
+
+<Note>
+  Authentication tokens are automatically managed through cookies, so you don't need to manually handle JWT tokens in your requests.
+</Note>
+
+## Authentication Flow
+
+The authentication system follows this flow:
+
+1. **Register** a new user account
+2. **Login** with credentials to receive a JWT token in a cookie
+3. **Access protected endpoints** - the cookie is automatically sent with requests
+4. **Verify current session** using the `/current` endpoint
+
+## Registration
+
+### Register a New User
+
+Create a new user account by sending user details to the registration endpoint.
+
+<CodeGroup>
+  ```javascript JavaScript
+  const response = await fetch('http://localhost:8080/api/sessions/register', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      first_name: 'Jane',
+      last_name: 'Smith',
+      email: 'jane.smith@example.com',
+      password: 'mySecurePassword456'
+    })
+  });
+
+  const data = await response.json();
+  console.log(data);
+  ```
+
+  ```bash cURL
+  curl -X POST http://localhost:8080/api/sessions/register \
+    -H "Content-Type: application/json" \
+    -d '{
+      "first_name": "Jane",
+      "last_name": "Smith",
+      "email": "jane.smith@example.com",
+      "password": "mySecurePassword456"
+    }'
+  ```
+
+  ```python Python
+  import requests
+
+  response = requests.post(
+      'http://localhost:8080/api/sessions/register',
+      json={
+          'first_name': 'Jane',
+          'last_name': 'Smith',
+          'email': 'jane.smith@example.com',
+          'password': 'mySecurePassword456'
+      }
+  )
+
+  print(response.json())
+  ```
+</CodeGroup>
+
+### Request Body
+
+<ParamField path="first_name" type="string" required>
+  User's first name
+</ParamField>
+
+<ParamField path="last_name" type="string" required>
+  User's last name
+</ParamField>
+
+<ParamField path="email" type="string" required>
+  User's email address (must be unique)
+</ParamField>
+
+<ParamField path="password" type="string" required>
+  User's password (will be hashed using bcrypt)
+</ParamField>
+
+### Response
+
+<CodeGroup>
+  ```json Success (200)
+  {
+    "status": "success",
+    "payload": "507f1f77bcf86cd799439011"
+  }
+  ```
+
+  ```json Error - Incomplete Values (400)
+  {
+    "status": "error",
+    "error": "Incomplete values"
+  }
+  ```
+
+  ```json Error - User Exists (400)
+  {
+    "status": "error",
+    "error": "User already exists"
+  }
+  ```
+</CodeGroup>
+
+<Warning>
+  The password is hashed using bcrypt before being stored in the database. Never store plain-text passwords.
+</Warning>
+
+### Implementation Details
+
+The registration process (from `sessions.controller.js:6-25`):
+
+```javascript
+const register = async (req, res) => {
+    try {
+        const { first_name, last_name, email, password } = req.body;
+        if (!first_name || !last_name || !email || !password) 
+            return res.status(400).send({ status: "error", error: "Incomplete values" });
+        
+        const exists = await usersService.getUserByEmail(email);
+        if (exists) 
+            return res.status(400).send({ status: "error", error: "User already exists" });
+        
+        const hashedPassword = await createHash(password);
+        const user = {
+            first_name,
+            last_name,
+            email,
+            password: hashedPassword
+        }
+        let result = await usersService.create(user);
+        res.send({ status: "success", payload: result._id });
+    } catch (error) {
+        // Handle error
+    }
+}
+```
+
+## Login
+
+### Authenticate a User
+
+Login with email and password to receive a JWT token stored in a cookie.
+
+<CodeGroup>
+  ```javascript JavaScript
+  const response = await fetch('http://localhost:8080/api/sessions/login', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    credentials: 'include', // Important: enables cookie handling
+    body: JSON.stringify({
+      email: 'jane.smith@example.com',
+      password: 'mySecurePassword456'
+    })
+  });
+
+  const data = await response.json();
+  console.log(data);
+  ```
+
+  ```bash cURL
+  curl -X POST http://localhost:8080/api/sessions/login \
+    -H "Content-Type: application/json" \
+    -c cookies.txt \
+    -d '{
+      "email": "jane.smith@example.com",
+      "password": "mySecurePassword456"
+    }'
+  ```
+
+  ```python Python
+  import requests
+
+  session = requests.Session()
+  response = session.post(
+      'http://localhost:8080/api/sessions/login',
+      json={
+          'email': 'jane.smith@example.com',
+          'password': 'mySecurePassword456'
+      }
+  )
+
+  print(response.json())
+  # Session object maintains cookies automatically
+  ```
+</CodeGroup>
+
+### Request Body
+
+<ParamField path="email" type="string" required>
+  User's registered email address
+</ParamField>
+
+<ParamField path="password" type="string" required>
+  User's password
+</ParamField>
+
+### Response
+
+<CodeGroup>
+  ```json Success (200)
+  {
+    "status": "success",
+    "message": "Logged in"
+  }
+  ```
+
+  ```json Error - Incomplete Values (400)
+  {
+    "status": "error",
+    "error": "Incomplete values"
+  }
+  ```
+
+  ```json Error - Invalid Password (400)
+  {
+    "status": "error",
+    "error": "Incorrect password"
+  }
+  ```
+
+  ```json Error - User Not Found (404)
+  {
+    "status": "error",
+    "error": "User doesn't exist"
+  }
+  ```
+</CodeGroup>
+
+### Cookie Details
+
+Upon successful login, the API sets a cookie with the following properties:
+
+<ParamField path="coderCookie" type="string">
+  Cookie name containing the JWT token
+</ParamField>
+
+<ParamField path="maxAge" type="number">
+  Cookie expiration: 3600000ms (1 hour)
+</ParamField>
+
+<ParamField path="httpOnly" type="boolean">
+  Not explicitly set, but recommended for production to prevent XSS attacks
+</ParamField>
+
+<Warning>
+  The JWT token expires after **1 hour**. Users will need to login again after expiration.
+</Warning>
+
+### Implementation Details
+
+The login process (from `sessions.controller.js:27-37`):
+
+```javascript
+const login = async (req, res) => {
+    const { email, password } = req.body;
+    if (!email || !password) 
+        return res.status(400).send({ status: "error", error: "Incomplete values" });
+    
+    const user = await usersService.getUserByEmail(email);
+    if(!user) 
+        return res.status(404).send({status:"error",error:"User doesn't exist"});
+    
+    const isValidPassword = await passwordValidation(user,password);
+    if(!isValidPassword) 
+        return res.status(400).send({status:"error",error:"Incorrect password"});
+    
+    const userDto = UserDTO.getUserTokenFrom(user);
+    const token = jwt.sign(userDto,'tokenSecretJWT',{expiresIn:"1h"});
+    res.cookie('coderCookie',token,{maxAge:3600000}).send({status:"success",message:"Logged in"})
+}
+```
+
+### JWT Token Payload
+
+The JWT token contains a DTO (Data Transfer Object) with the following user information:
+
+```javascript
+// From User.dto.js
+{
+  name: "Jane Smith",        // Combined first_name and last_name
+  role: "user",              // User role
+  email: "jane.smith@example.com"
+}
+```
+
+<Note>
+  The JWT is signed with the secret `tokenSecretJWT`. In production, this should be an environment variable.
+</Note>
+
+## Current Session
+
+### Get Current User
+
+Retrieve the currently authenticated user's information from their JWT token.
+
+<CodeGroup>
+  ```javascript JavaScript
+  const response = await fetch('http://localhost:8080/api/sessions/current', {
+    method: 'GET',
+    credentials: 'include' // Includes cookies
+  });
+
+  const data = await response.json();
+  console.log(data);
+  ```
+
+  ```bash cURL
+  curl -X GET http://localhost:8080/api/sessions/current \
+    -b cookies.txt
+  ```
+
+  ```python Python
+  # Using the same session from login
+  response = session.get('http://localhost:8080/api/sessions/current')
+  print(response.json())
+  ```
+</CodeGroup>
+
+### Response
+
+```json
+{
+  "status": "success",
+  "payload": {
+    "name": "Jane Smith",
+    "role": "user",
+    "email": "jane.smith@example.com"
+  }
+}
+```
+
+### Implementation Details
+
+The current session endpoint (from `sessions.controller.js:39-44`):
+
+```javascript
+const current = async(req,res) =>{
+    const cookie = req.cookies['coderCookie']
+    const user = jwt.verify(cookie,'tokenSecretJWT');
+    if(user)
+        return res.send({status:"success",payload:user})
+}
+```
+
+<Warning>
+  This endpoint does not have error handling for missing or invalid tokens. In production, you should add try-catch blocks to handle JWT verification errors.
+</Warning>
+
+## Security Best Practices
+
+<Steps>
+  <Step title="Use HTTPS in Production">
+    Always use HTTPS in production to prevent token interception. Set the `secure` flag on cookies:
+
+    ```javascript
+    res.cookie('coderCookie', token, {
+      maxAge: 3600000,
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict'
+    })
+    ```
+  </Step>
+
+  <Step title="Use Environment Variables">
+    Store the JWT secret in environment variables, not in code:
+
+    ```bash .env
+    JWT_SECRET=your-super-secret-key-here
+    JWT_EXPIRATION=1h
+    ```
+
+    ```javascript
+    const token = jwt.sign(userDto, process.env.JWT_SECRET, {
+      expiresIn: process.env.JWT_EXPIRATION
+    });
+    ```
+  </Step>
+
+  <Step title="Implement Token Refresh">
+    Consider implementing refresh tokens for better security and user experience. Access tokens should be short-lived (15-30 minutes), with refresh tokens used to obtain new access tokens.
+  </Step>
+
+  <Step title="Add Rate Limiting">
+    Implement rate limiting on authentication endpoints to prevent brute force attacks:
+
+    ```bash
+    npm install express-rate-limit
+    ```
+  </Step>
+</Steps>
+
+## Error Handling
+
+All authentication endpoints follow a consistent error response format:
+
+```json
+{
+  "status": "error",
+  "error": "<error message>"
+}
+```
+
+Common HTTP status codes:
+
+- `200` - Success
+- `400` - Bad Request (incomplete values, invalid credentials)
+- `404` - Not Found (user doesn't exist)
+- `401` - Unauthorized (invalid or expired token)
+- `500` - Internal Server Error
+
+## Testing Authentication
+
+You can test the complete authentication flow:
+
+```bash
+# 1. Register a new user
+curl -X POST http://localhost:8080/api/sessions/register \
+  -H "Content-Type: application/json" \
+  -d '{"first_name":"Test","last_name":"User","email":"test@example.com","password":"test123"}'
+
+# 2. Login and save cookies
+curl -X POST http://localhost:8080/api/sessions/login \
+  -H "Content-Type: application/json" \
+  -c cookies.txt \
+  -d '{"email":"test@example.com","password":"test123"}'
+
+# 3. Verify current session
+curl -X GET http://localhost:8080/api/sessions/current \
+  -b cookies.txt
+
+# 4. Access protected endpoint
+curl -X GET http://localhost:8080/api/users \
+  -b cookies.txt
+```
+
+## API Endpoints Summary
+
+| Endpoint | Method | Description | Auth Required |
+|----------|--------|-------------|---------------|
+| `/api/sessions/register` | POST | Register a new user | No |
+| `/api/sessions/login` | POST | Login and receive JWT token | No |
+| `/api/sessions/current` | GET | Get current user info | Yes |
+
+<Note>
+  The source code also includes `unprotectedLogin` and `unprotectedCurrent` endpoints for testing purposes. These should not be used in production.
+</Note>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="User Management" icon="users" href="/api/users/get-all">
+    Manage user accounts and profiles
+  </Card>
+  <Card title="Pet Management" icon="paw" href="/api/pets/get-all">
+    Start working with pets once authenticated
+  </Card>
+</CardGroup>

@@ -1,0 +1,221 @@
+---
+title: Welcome to Pet Adoption API
+description: RESTful API service for managing pet adoptions, users, and authentication with MongoDB backend
+mode: custom
+---
+
+<div className="relative w-full overflow-hidden dark:bg-[#0f1117] bg-white py-16 lg:py-20">
+  <div className="max-w-6xl mx-auto px-6 lg:px-8">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+      <div className="lg:col-span-7">
+        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold dark:text-white text-gray-900 mb-4">
+          Pet Adoption API Documentation
+        </h1>
+        <p className="text-base sm:text-lg lg:text-xl dark:text-gray-400 text-gray-600 mb-8 max-w-2xl">
+          Build applications for pet adoption management with a RESTful API featuring JWT authentication, MongoDB storage, and comprehensive user, pet, and adoption workflows.
+        </p>
+        <div className="flex flex-wrap gap-3">
+          <a 
+            href="/quickstart" 
+            className="inline-flex items-center px-6 py-3 rounded-lg bg-[#FF6B6B] text-white font-semibold hover:bg-[#ff5252] transition-colors no-underline"
+          >
+            Get Started
+          </a>
+          <a 
+            href="/api/sessions/register" 
+            className="inline-flex items-center px-6 py-3 rounded-lg border border-gray-300 dark:border-[#27272a] dark:bg-white/10 bg-gray-50 dark:text-white text-gray-900 font-semibold hover:border-[#FF6B6B] dark:hover:border-[#FF6B6B] transition-colors no-underline"
+          >
+            API Reference
+          </a>
+        </div>
+      </div>
+      <div className="lg:col-span-5 flex items-center justify-center">
+        <div className="w-full max-w-md p-8 rounded-2xl dark:bg-[#1a1d27] bg-gray-50 border dark:border-[#27272a] border-gray-200">
+          <div className="text-6xl mb-4 text-center">🐾</div>
+          <div className="space-y-3 text-sm dark:text-gray-300 text-gray-700">
+            <div className="flex items-center gap-2">
+              <span className="text-[#FF6B6B]">✓</span> JWT Authentication
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[#FFE66D]">✓</span> MongoDB Integration
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[#4ECDC4]">✓</span> Image Upload Support
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[#FF6B6B]">✓</span> OpenAPI/Swagger Docs
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div className="mt-16 mb-16 max-w-5xl mx-auto px-6">
+  <h2 className="text-2xl sm:text-3xl font-semibold dark:text-white text-gray-900 mb-3">
+    Quick start
+  </h2>
+  <p className="text-base dark:text-gray-400 text-gray-600 mb-8">
+    Get your Pet Adoption API up and running in minutes
+  </p>
+
+  <Steps>
+    <Step title="Clone and install dependencies">
+      Clone the repository and install required packages:
+      
+      ```bash
+      git clone https://github.com/justinamutigliengo/proyecto_back.git
+      cd proyecto_back
+      npm install
+      ```
+    </Step>
+
+    <Step title="Configure environment variables">
+      Create a `.env` file in the root directory with your MongoDB connection string and JWT secret:
+      
+      ```bash
+      MONGO_URL=mongodb://localhost:27017/adoptme
+      PORT=8080
+      JWT_SECRET=your-secret-key-here
+      ```
+    </Step>
+
+    <Step title="Start the server">
+      Run the development server:
+      
+      ```bash
+      npm run dev
+      ```
+      
+      The API will be available at `http://localhost:8080`
+    </Step>
+
+    <Step title="Make your first API call">
+      Register a new user to get started:
+      
+      ```bash cURL
+      curl -X POST http://localhost:8080/api/sessions/register \
+        -H "Content-Type: application/json" \
+        -d '{
+          "first_name": "Jane",
+          "last_name": "Doe",
+          "email": "jane@example.com",
+          "password": "securepass123",
+          "role": "user"
+        }'
+      ```
+      
+      <Accordion title="Example response">
+        ```json
+        {
+          "status": "success",
+          "payload": {
+            "_id": "507f1f77bcf86cd799439011",
+            "first_name": "Jane",
+            "last_name": "Doe",
+            "email": "jane@example.com",
+            "role": "user",
+            "pets": []
+          }
+        }
+        ```
+      </Accordion>
+    </Step>
+  </Steps>
+</div>
+
+<div className="mt-16 mb-16 max-w-5xl mx-auto px-6">
+  <h2 className="text-2xl sm:text-3xl font-semibold dark:text-white text-gray-900 mb-3">
+    Explore the API
+  </h2>
+  <p className="text-base dark:text-gray-400 text-gray-600 mb-8">
+    Dive into the different resources available in the Pet Adoption API
+  </p>
+
+  <CardGroup cols={2}>
+    <Card title="Authentication" icon="lock" href="/api/sessions/register">
+      Register users, handle login, and manage JWT-based sessions
+    </Card>
+    <Card title="Users" icon="users" href="/api/users/get-all">
+      Create, read, update, and delete user accounts with role-based access
+    </Card>
+    <Card title="Pets" icon="paw" href="/api/pets/get-all">
+      Manage pet listings with image uploads and adoption status tracking
+    </Card>
+    <Card title="Adoptions" icon="heart" href="/api/adoptions/get-all">
+      Process pet adoptions linking users with their new pets
+    </Card>
+  </CardGroup>
+</div>
+
+<div className="mt-16 mb-16 max-w-5xl mx-auto px-6">
+  <h2 className="text-2xl sm:text-3xl font-semibold dark:text-white text-gray-900 mb-3">
+    Key features
+  </h2>
+  <p className="text-base dark:text-gray-400 text-gray-600 mb-8">
+    Everything you need to build a pet adoption platform
+  </p>
+
+  <CardGroup cols={3}>
+    <Card title="JWT authentication" icon="shield-check">
+      Secure user registration and login with JSON Web Tokens and bcrypt password hashing
+    </Card>
+    <Card title="MongoDB storage" icon="database">
+      Persistent data storage with Mongoose ODM and relationship modeling
+    </Card>
+    <Card title="Image uploads" icon="image">
+      Multer-powered file uploads for pet profile photos
+    </Card>
+    <Card title="Mock data" icon="flask">
+      Faker.js integration for generating test users and pets
+    </Card>
+    <Card title="OpenAPI docs" icon="book-open">
+      Interactive Swagger UI at `/apidocs` for testing endpoints
+    </Card>
+    <Card title="Docker ready" icon="docker">
+      Containerized deployment with included Dockerfile
+    </Card>
+  </CardGroup>
+</div>
+
+<div className="mt-16 mb-16 max-w-5xl mx-auto px-6">
+  <h2 className="text-2xl sm:text-3xl font-semibold dark:text-white text-gray-900 mb-3">
+    Resources
+  </h2>
+  <p className="text-base dark:text-gray-400 text-gray-600 mb-8">
+    Additional resources to help you get the most out of the API
+  </p>
+
+  <CardGroup cols={2}>
+    <Card title="Architecture guide" icon="sitemap" href="/concepts/architecture">
+      Learn about the repository pattern, DTOs, and service layer architecture
+    </Card>
+    <Card title="Data models" icon="diagram-project" href="/concepts/data-models">
+      Understand the User, Pet, and Adoption schemas with MongoDB relationships
+    </Card>
+    <Card title="Docker deployment" icon="server" href="/guides/docker-deployment">
+      Deploy the API in production with Docker and environment configuration
+    </Card>
+    <Card title="Testing guide" icon="vial" href="/guides/testing">
+      Run the test suite with Mocha, Chai, and Supertest
+    </Card>
+  </CardGroup>
+</div>
+
+<div className="mt-16 mb-16 max-w-5xl mx-auto px-6">
+  <div className="p-8 rounded-2xl dark:bg-[#1a1d27] bg-gray-50 border dark:border-[#27272a] border-gray-200">
+    <h2 className="text-2xl font-semibold dark:text-white text-gray-900 mb-3">
+      Ready to build your pet adoption app?
+    </h2>
+    <p className="text-base dark:text-gray-400 text-gray-600 mb-6">
+      Start integrating the Pet Adoption API into your application today
+    </p>
+    <a 
+      href="/quickstart" 
+      className="inline-flex items-center px-6 py-3 rounded-lg bg-[#FF6B6B] text-white font-semibold hover:bg-[#ff5252] transition-colors no-underline"
+    >
+      Get Started Now
+    </a>
+  </div>
+</div>
